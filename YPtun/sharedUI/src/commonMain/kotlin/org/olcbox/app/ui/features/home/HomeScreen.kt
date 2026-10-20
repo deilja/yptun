@@ -39,6 +39,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.VpnKey
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -522,6 +524,33 @@ fun HomeScreen(
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            item(key = "xfi-account") {
+                // XFi: one-tap entry to the subscription bot (keys, payment, Mini App cabinet)
+                // right under the connect button. The cabinet itself authorizes via Telegram,
+                // so the link opens the bot and the cabinet is one more tap inside it.
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable { runCatching { uriHandler.openUri(org.olcbox.app.DonationInfo.VPN_BOT_URL) } }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(Icons.Rounded.VpnKey, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(s.supportVpnSub, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(s.supportVpnSubHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
                 }
             }
