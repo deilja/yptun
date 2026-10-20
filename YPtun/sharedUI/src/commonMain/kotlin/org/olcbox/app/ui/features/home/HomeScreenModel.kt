@@ -915,10 +915,10 @@ class HomeScreenViewModel(
                 "transports are supported (a session needs a secret), or the link is damaged."
         }
         return if (isSingleInboundLink && YptunInboundCodec.parse(text) == null) {
-            "This YPtun link is damaged — characters were lost in transit. " +
+            "This XFi link is damaged — characters were lost in transit. " +
                 "Scan the QR instead, or send the link as a file."
         } else {
-            "No valid YPtun config found"
+            "No valid XFi config found"
         }
     }
 
@@ -1154,7 +1154,7 @@ class HomeScreenViewModel(
 
     private fun buildLogsExport(logs: List<String>): String {
         return buildString {
-            appendLine("YPtun application logs")
+            appendLine("XFi application logs")
             appendLine("Entries: ${logs.size}")
             appendLine()
             logs.forEachIndexed { index, line ->

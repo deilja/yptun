@@ -911,7 +911,7 @@ class LocationsRepositoryImpl(
             }
         }
 
-        // Panels answer an unknown UA ("YPtun/x") with a stub / 4xx ("client not supported"), so as the last
+        // Panels answer an unknown UA ("XFi/x") with a stub / 4xx ("client not supported"), so as the last
         // resort re-fetch pretending to be a full Happ client (Happ UA + HWID/device headers).
         if (parsed == null && input.isHttpUrl() &&
             privacySettings().effectiveSubscriptionUa() == AppBehaviorSettings.SUB_UA_BOTH
@@ -970,7 +970,7 @@ class LocationsRepositoryImpl(
         ) ?: return null
 
         // Enrich from the Happ-UA rich body (the only variant that carries BOTH FakeDNS and the
-        // per-server `meta.serverDescription`). The main fetch keeps the user's UA (default YPtun →
+        // per-server `meta.serverDescription`). The main fetch keeps the user's UA (default XFi →
         // plain links with neither), so recover both here and attach them. FakeDNS pool + dns.hosts are
         // identical across all servers, so one spec is attached to every location that lacks one;
         // descriptions are matched per server. xhttp/raw-Xray locations run verbatim on Xray and are
@@ -1028,7 +1028,7 @@ class LocationsRepositoryImpl(
     /**
      * Maps `"server:port"` → per-server description (`meta.serverDescription`) from a rich Xray
      * subscription body (Happ-UA variant). Used to attach descriptions to locations parsed from the
-     * user's chosen-UA body (default YPtun → plain links that carry no `meta`), the same way FakeDNS is
+     * user's chosen-UA body (default XFi → plain links that carry no `meta`), the same way FakeDNS is
      * recovered. Empty when the body has no descriptions.
      */
     private fun serverDescriptionsFromSubscriptionBody(body: String): Map<String, String> {
@@ -1201,7 +1201,7 @@ class LocationsRepositoryImpl(
                                 // both the JSON `links[]` and base64/plain bodies.
                                 "application/json, text/plain, text/markdown, application/octet-stream, */*"
                             )
-                            // Panels do User-Agent content-negotiation: our own "YPtun/x" (and a browser
+                            // Panels do User-Agent content-negotiation: our own "XFi/x" (and a browser
                             // UA) get only bare base64 vless links, while a recognised client UA gets the
                             // RICH per-server Xray JSON (with dns.hosts / routing / FAKEDNS). We support
                             // that JSON (parseRawXray), and it's the only way to receive the server's
@@ -1247,7 +1247,7 @@ class LocationsRepositoryImpl(
 
                 // FakeDNS enrichment: the server's fakeip pool + dns.hosts only ship in the rich Xray
                 // JSON returned under the "Happ/1.0" UA. The MAIN fetch above keeps the user's chosen UA
-                // (default YPtun → clean names/links), so do a SEPARATE Happ-UA fetch here purely to
+                // (default XFi → clean names/links), so do a SEPARATE Happ-UA fetch here purely to
                 // recover the FakeDNS config and attach it later. Skipped (reuse main) when the main UA
                 // already is Happ. Best-effort: any failure just means no FakeDNS.
                 val fakednsJson = if (userAgent == AppBehaviorSettings.HAPP_USER_AGENT) {

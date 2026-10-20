@@ -986,17 +986,17 @@ private fun AppSettingsHubContent(
         SettingsGroupCard {
             SettingsGroupRow(
                 title = s.community,
-                subtitle = "t.me/YPtun",
+                subtitle = "t.me/XFI_VPN_bot",
                 icon = Icons.Rounded.Person,
                 enabled = true,
-                onClick = { communityUriHandler.openUri("https://t.me/YPtun") }
+                onClick = { communityUriHandler.openUri("https://t.me/XFI_VPN_bot") }
             )
             SettingsGroupDivider()
             SettingsGroupRow(
                 title = s.howToConnect,
                 icon = Icons.Outlined.Shield,
                 enabled = true,
-                onClick = { communityUriHandler.openUri("https://t.me/YPtun") }
+                onClick = { communityUriHandler.openUri("https://t.me/XFI_VPN_bot") }
             )
         }
 
@@ -1008,10 +1008,10 @@ private fun AppSettingsHubContent(
         SettingsGroupCard {
             SettingsGroupRow(
                 title = s.termsOfUse,
-                subtitle = "yanisplugg.github.io/yptun/terms.html",
+                subtitle = "github.com/deilja/yptun",
                 icon = Icons.Outlined.Shield,
                 enabled = true,
-                onClick = { communityUriHandler.openUri("https://yanisplugg.github.io/yptun/terms.html") }
+                onClick = { communityUriHandler.openUri("https://github.com/deilja/yptun") }
             )
         }
 
@@ -2749,7 +2749,7 @@ private fun SocksProxySettingsForm(
                 value = username,
                 onValueChange = onUsernameChanged,
                 label = s.username,
-                placeholder = "yptun...",
+                placeholder = "xfi...",
                 enabled = enabled,
                 isError = username.isBlank(),
                 leadingIcon = Icons.Rounded.Person,
@@ -4621,13 +4621,13 @@ private fun UrlSchemesContent(onBack: () -> Unit) {
         }
 
         SettingsSectionLabel(s.urlSchemeAddConfig)
-        UrlSchemeRow("yptun://import/{CONFIG}", clipboard)
+        UrlSchemeRow("xfi://import/{CONFIG}", clipboard)
         SettingsSectionLabel(s.urlSchemeAddSubscription)
-        UrlSchemeRow("yptun://import/{URL}", clipboard)
+        UrlSchemeRow("xfi://import/{URL}", clipboard)
         SettingsSectionLabel(s.urlSchemeControl)
-        UrlSchemeRow("yptun://control/start", clipboard)
-        UrlSchemeRow("yptun://control/stop", clipboard)
-        UrlSchemeRow("yptun://control/restart", clipboard)
+        UrlSchemeRow("xfi://control/start", clipboard)
+        UrlSchemeRow("xfi://control/stop", clipboard)
+        UrlSchemeRow("xfi://control/restart", clipboard)
     }
 }
 

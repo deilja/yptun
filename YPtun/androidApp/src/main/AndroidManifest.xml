@@ -47,9 +47,9 @@
         android:name=".App"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="YPtun"
+        android:label="XFi"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/Theme.YPtun"
+        android:theme="@style/Theme.XFi"
         android:usesCleartextTraffic="true">
 
         <!-- Use our bundled EmojiCompat (init in App.onCreate) instead of the default
@@ -76,12 +76,12 @@
             android:launchMode="singleInstance"
             android:windowSoftInputMode="adjustPan"
             android:exported="true">
-            <!-- Deep links: yptun://import/{url|config}, yptun://control/{start|stop|restart} -->
+            <!-- Deep links: xfi://import/{url|config}, xfi://control/{start|stop|restart} -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="yptun" />
+                <data android:scheme="xfi" />
             </intent-filter>
             <!-- Tunnel share links: qWDTT quick link and OpenFlux client link open the importer. -->
             <intent-filter>
@@ -366,7 +366,7 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:label="@string/widget_config_label"
-            android:theme="@style/Theme.YPtun">
+            android:theme="@style/Theme.XFi">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>

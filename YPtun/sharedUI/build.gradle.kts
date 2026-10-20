@@ -40,7 +40,7 @@ abstract class GenerateAppInfoTask : DefaultTask() {
             package org.olcbox.app
 
             internal object GeneratedAppInfo {
-                const val NAME: String = "YPtun"
+                const val NAME: String = "XFi"
                 const val VERSION: String = "$escapedVersion"
             }
             """.trimIndent() + "\n"

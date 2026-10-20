@@ -45,7 +45,7 @@ fun HomeScreenAppBar(
     CenterAlignedTopAppBar(
         title = {
             Text(
-                text = "YPtun",
+                text = "XFi",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )

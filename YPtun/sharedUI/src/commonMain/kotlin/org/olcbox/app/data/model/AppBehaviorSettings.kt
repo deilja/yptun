@@ -180,10 +180,10 @@ data class AppBehaviorSettings(
     /**
      * Which User-Agent the app presents to subscription panels (Settings -> Privacy). Panels do UA
      * content-negotiation, so the choice also decides what they answer with. One of [SUBSCRIPTION_UA_MODES]:
-     *  - [SUB_UA_BOTH] (default): "YPtun/x" for the main fetch (clean names and links), plus a second
-     *    "Happ/1.0" request for the server's FakeDNS config and as the fallback when a panel refuses YPtun;
+     *  - [SUB_UA_BOTH] (default): "XFi/x" for the main fetch (clean names and links), plus a second
+     *    "Happ/1.0" request for the server's FakeDNS config and as the fallback when a panel refuses XFi;
      *  - [SUB_UA_HAPP]: only "Happ/1.0" (the rich Xray JSON);
-     *  - [SUB_UA_YPTUN_ONLY]: only "YPtun/x" — no request ever presents as Happ, so no FakeDNS from the panel;
+     *  - [SUB_UA_YPTUN_ONLY]: only "XFi/x" — no request ever presents as Happ, so no FakeDNS from the panel;
      *  - [SUB_UA_V2RAYTUN]: only "v2raytun/<platform>".
      * The legacy stored value [SUB_UA_YPTUN] meant [SUB_UA_BOTH]. Read it through [effectiveSubscriptionUa].
      */

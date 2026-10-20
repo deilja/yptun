@@ -47,12 +47,12 @@ class AndroidUpdateInstaller(
         return runCatching {
             if (!canRequestPackageInstalls()) {
                 openUnknownSourcesSettings().getOrThrow()
-                return@runCatching "Allow YPtun to install updates, then tap Download again"
+                return@runCatching "Allow XFi to install updates, then tap Download again"
             }
 
             val file = download(asset, onProgress).getOrThrow()
             // Update-channel hardening: never hand the OS an APK that isn't signed with the official
-            // YPtun key (a MITM on the download could otherwise swap in a malicious build). The OS
+            // XFi key (a MITM on the download could otherwise swap in a malicious build). The OS
             // install would reject a mismatched signature anyway, but we abort early + delete it.
             requireOfficialApk(file)
             val installIntent = installIntent(file)
@@ -156,7 +156,7 @@ class AndroidUpdateInstaller(
         val patchGz = download(delta, onProgress).getOrThrow()
         reportStage(UpdateStage(UpdateStageKind.ApplyPatch, 2, 3), onStage)
         reportProgress(0f, onProgress)
-        val outApk = File(File(appContext.cacheDir, "updates").apply { mkdirs() }, "yptun-delta-update.apk")
+        val outApk = File(File(appContext.cacheDir, "updates").apply { mkdirs() }, "xfi-delta-update.apk")
         try {
             DeltaApkPatcher.apply(appContext, baseApk, patchGz, outApk)
         } finally {

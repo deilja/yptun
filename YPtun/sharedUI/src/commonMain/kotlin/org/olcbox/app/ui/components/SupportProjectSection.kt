@@ -16,10 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.rounded.CurrencyBitcoin
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.VpnKey
 import androidx.compose.material3.Icon
@@ -32,19 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.olcbox.app.DonationInfo
 import org.olcbox.app.ui.i18n.LocalStrings
 
-private val DonationAlertsOrange = Color(0xFFF57D07)
 private val VpnBlue = Color(0xFF2AABEE)
 private val GithubStarGold = Color(0xFFE3B341)
 
 /**
- * "Support the project" block for the settings screen: a crypto wallet (tap = copy) and a
- * DonationAlerts link for donors in Russia. Platform-neutral — the host passes how to copy / open.
+ * "Support" block for the settings screen: the XFi bot (subscriptions and support) and the
+ * project repository. Platform-neutral — the host passes how to open links. The [onCopyAddress]
+ * callback is kept for API compatibility with the platform settings screens.
  */
 @Composable
 fun SupportProjectSection(
@@ -78,32 +74,7 @@ fun SupportProjectSection(
             }
             Spacer(Modifier.height(2.dp))
 
-            SupportOption(
-                icon = Icons.Rounded.CurrencyBitcoin,
-                accent = MaterialTheme.colorScheme.primary,
-                title = s.supportCrypto,
-                subtitle = DonationInfo.ASSETS,
-                trailing = Icons.Outlined.ContentCopy,
-                onClick = { onCopyAddress(DonationInfo.TON_ADDRESS) }
-            ) {
-                // Shown in full (monospace) so it can be checked against what lands in the clipboard.
-                Text(
-                    DonationInfo.TON_ADDRESS,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
-            }
 
-            SupportOption(
-                icon = Icons.Rounded.Payments,
-                accent = DonationAlertsOrange,
-                title = "DonationAlerts",
-                subtitle = s.supportDonationAlertsHint,
-                trailing = Icons.AutoMirrored.Rounded.OpenInNew,
-                onClick = { onOpenUrl(DonationInfo.DONATIONALERTS_URL) }
-            )
 
             SupportOption(
                 icon = Icons.Rounded.VpnKey,

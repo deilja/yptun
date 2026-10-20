@@ -87,24 +87,24 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * One-time warning when the running build is NOT signed with the official YPtun release key —
+     * One-time warning when the running build is NOT signed with the official XFi release key —
      * i.e. someone repackaged and re-signed the app (ad/spyware injection, "стырили сборку"). This is
      * tamper-evident only: a repacker can patch this out. Shown once per install; acknowledged flag
      * persisted. Official builds short-circuit immediately.
      */
     private fun maybeWarnUnofficialBuild() {
         if (org.olcbox.app.security.IntegrityGuard.isOfficialInstalled(this)) return
-        val prefs = getSharedPreferences("yptun_integrity", MODE_PRIVATE)
+        val prefs = getSharedPreferences("xfi_integrity", MODE_PRIVATE)
         if (prefs.getBoolean("unofficial_ack", false)) return
         android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
             .setTitle("⚠ Неофициальная сборка / Unofficial build")
             .setMessage(
-                "Эта копия YPtun подписана не ключом разработчика — она могла быть изменена " +
+                "Эта копия XFi подписана не ключом разработчика — она могла быть изменена " +
                     "третьими лицами (реклама, слежка, вредонос). Скачайте оригинал:\n" +
-                    "github.com/yanisplugg/yptun\n\n" +
-                    "This YPtun build is NOT signed by the developer and may have been modified by a " +
+                    "github.com/deilja/yptun\n\n" +
+                    "This XFi build is NOT signed by the developer and may have been modified by a " +
                     "third party. Get the official app from:\n" +
-                    "github.com/yanisplugg/yptun"
+                    "github.com/deilja/yptun"
             )
             .setCancelable(false)
             .setPositiveButton("OK") { dialog, _ ->
@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
     }
 
-    /** Handles yptun:// deep links: import/{payload} and control/{start|stop|restart}. */
+    /** Handles xfi:// deep links: import/{payload} and control/{start|stop|restart}. */
     private fun handleDeepLink(intent: Intent?) {
         val uri: Uri = intent?.data ?: return
         // Tunnel share links tapped in a browser/messenger import exactly like a pasted one.
@@ -141,11 +141,11 @@ class MainActivity : ComponentActivity() {
             )
             return
         }
-        if (!uri.scheme.equals("yptun", ignoreCase = true)) return
+        if (!uri.scheme.equals("xfi", ignoreCase = true)) return
 
         when (uri.host?.lowercase()) {
             "import" -> {
-                val raw = uri.toString().substringAfter("yptun://import/", "").trim()
+                val raw = uri.toString().substringAfter("xfi://import/", "").trim()
                 val payload = runCatching { Uri.decode(raw) }.getOrNull()?.takeIf { it.isNotBlank() }
                     ?: raw.takeIf { it.isNotBlank() }
                     ?: return

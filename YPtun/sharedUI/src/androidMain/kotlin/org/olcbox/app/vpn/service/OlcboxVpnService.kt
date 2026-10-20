@@ -3018,7 +3018,7 @@ class OlcboxVpnService : VpnService() {
     private fun establishSystemVpnTunnel(): ParcelFileDescriptor? {
         return try {
             val builder = Builder()
-                .setSession("YPtun")
+                .setSession("XFi")
                 .setBlocking(true)
                 .setMtu(activeMtu)
                 .addAddress(TUN_IPV4_ADDRESS, IPV4_PREFIX_LENGTH)
@@ -4504,7 +4504,7 @@ class OlcboxVpnService : VpnService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                "YPtun VPN",
+                "XFi VPN",
                 NotificationManager.IMPORTANCE_LOW
             )
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
@@ -4530,7 +4530,7 @@ class OlcboxVpnService : VpnService() {
     }
 
     private fun buildNotification(status: String, speed: Pair<String, String>? = null): Notification {
-        val title = "YPtun"
+        val title = "XFi"
         // Body is the status line (the active server name when connected); the live speed, when shown,
         // goes on its own second line below it (coloured text views in the custom layout).
         val ping = notifPingMs?.takeIf { OlcboxVpnState.status.value is VpnStatus.Connected }
@@ -4570,7 +4570,7 @@ class OlcboxVpnService : VpnService() {
                 rv.setTextViewText(pingRow, "${ns.notifPingWord} $ping ms")
                 rv.setViewVisibility(pingRow, android.view.View.VISIBLE)
                 // A collapsed notification fits three lines; the system header already names the app,
-                // so the "YPtun" title makes room for the ping line (else the speed hides until expanded).
+                // so the "XFi" title makes room for the ping line (else the speed hides until expanded).
                 rv.setViewVisibility(resources.getIdentifier("notif_title", "id", pkg), android.view.View.GONE)
             }
             val speedRow = resources.getIdentifier("notif_speed", "id", pkg)

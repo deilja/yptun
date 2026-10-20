@@ -10,7 +10,7 @@ import java.security.MessageDigest
 
 /**
  * Tamper-EVIDENT signing-certificate check. Reads the X.509 certificate the running app (or a
- * downloaded APK) is signed with and compares its SHA-256 against the official YPtun release key.
+ * downloaded APK) is signed with and compares its SHA-256 against the official XFi release key.
  *
  * Two uses:
  *  1. Warn the user when the INSTALLED build isn't ours — catches casual repackaging (someone strips
@@ -23,12 +23,15 @@ import java.security.MessageDigest
 object IntegrityGuard {
 
     /**
-     * SHA-256 (lowercase hex, no separators) of the official YPtun release signing certificate
-     * (`yptun-release.jks`, alias `yptun`, CN=YPtun). keytool prints it as
-     * `EA:6B:8C:6B:13:53:D9:C1:…:4E:D0`.
+     * SHA-256 (lowercase hex, no separators) of the official XFi release signing certificate.
+     *
+     * TODO(XFi): PLACEHOLDER — all-zeroes until the XFi release keystore is generated at the first
+     * release build; replace with the real certificate SHA-256 (keytool -list -v) BEFORE publishing
+     * any release. While this is a placeholder, every build reads as "unofficial" (one-time warning)
+     * and downloaded update APKs are rejected — the safe failure mode.
      */
     const val OFFICIAL_SIGNING_SHA256 =
-        "ea6b8c6b1353d9c11086cd7e75259210b26a1b11a6930292270eecccb19f4ed0"
+        "0000000000000000000000000000000000000000000000000000000000000000"
 
     /** SHA-256 of the cert the INSTALLED app is signed with (lowercase hex), or null if unreadable. */
     fun installedSigningSha256(context: Context): String? =

@@ -2791,7 +2791,7 @@ private fun CsqttAdvanced(
             )
         }
         Text(
-            text = "Капча VK решается автоматически (Rust-решатель); ручной WebView-режим csqtt в YPtun пока не поддержан.",
+            text = "Капча VK решается автоматически (Rust-решатель); ручной WebView-режим csqtt в XFi пока не поддержан.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -44,7 +44,7 @@ data class RoutingProfilesState(
 
     /**
      * Encodes the WHOLE routing setup (every profile + global choice + geo sources) into a single
-     * `yptun://routing/<base64url-json>` link for one-tap export/import. Round-trips via [fromRoutingLink].
+     * `xfi://routing/<base64url-json>` link for one-tap export/import. Round-trips via [fromRoutingLink].
      */
     @OptIn(ExperimentalEncodingApi::class)
     fun toRoutingLink(): String {
@@ -54,12 +54,12 @@ data class RoutingProfilesState(
     }
 
     companion object {
-        const val ROUTING_LINK_PREFIX = "yptun://routing/"
+        const val ROUTING_LINK_PREFIX = "xfi://routing/"
 
         private val exportJson = Json { encodeDefaults = false }
         private val importJson = Json { ignoreUnknownKeys = true; isLenient = true }
 
-        /** Parses a `yptun://routing/<base64url-json>` link back into a full state, or null if invalid. */
+        /** Parses a `xfi://routing/<base64url-json>` link back into a full state, or null if invalid. */
         @OptIn(ExperimentalEncodingApi::class)
         fun fromRoutingLink(link: String): RoutingProfilesState? {
             val t = link.trim()

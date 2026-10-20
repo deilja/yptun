@@ -8,7 +8,7 @@ import org.olcbox.app.data.model.LocationConfig
 /**
  * The app's own universal share format for a single inbound/location:
  *
- *     yptun://inbound?v=1&d=<base64url(JSON of the full LocationConfig)>
+ *     xfi://inbound?v=1&d=<base64url(JSON of the full LocationConfig)>
  *
  * Unlike [ConfigShareService.olcRtcUri] / [ShareLinkComposer] (which emit engine-specific links that
  * only carry the bare proxy), this round-trips the ENTIRE [LocationConfig] — engine, transport, the
@@ -16,7 +16,7 @@ import org.olcbox.app.data.model.LocationConfig
  * byte-for-byte. Parsed back by [parse] (wired into the importer) for paste / QR-scan / file import.
  */
 object YptunInboundCodec {
-    const val PREFIX = "yptun://inbound"
+    const val PREFIX = "xfi://inbound"
 
     // encodeDefaults=false keeps the link short (omitted fields fall back to their defaults on
     // decode); ignoreUnknownKeys lets a newer sender's extra fields be dropped instead of failing.

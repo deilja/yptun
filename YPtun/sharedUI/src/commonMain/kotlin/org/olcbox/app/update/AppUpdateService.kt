@@ -33,7 +33,7 @@ data class ReleaseMirror(
     companion object {
         val GitHub = ReleaseMirror(
             name = "GitHub",
-            repositoryUrl = "https://github.com/yanisplugg/yptun"
+            repositoryUrl = "https://github.com/deilja/yptun"
         )
     }
 }
@@ -279,7 +279,7 @@ class AppUpdateService(
             assets: List<GithubReleaseAsset>,
             platform: UpdatePlatform
         ): GithubReleaseAsset? {
-            // Match on the ABI token alone — release assets are named like "YPtun-v2.1.0-arm64-v8a.apk"
+            // Match on the ABI token alone — release assets are named like "XFi-v2.1.0-arm64-v8a.apk"
             // and do NOT carry an "android" token, so requiring one here skipped every real asset.
             val preferredExtensions = platform.preferredExtensions
             val apkAssets = assets.filter { it.name.lowercase().endsWith(".apk") }
@@ -289,7 +289,7 @@ class AppUpdateService(
             if (exactAbiAsset != null) return exactAbiAsset
 
             // No ABI-specific apk for this device: fall back to a universal apk (one without any known
-            // ABI token in its name, e.g. "YPtun-v2.1.0-universal.apk").
+            // ABI token in its name, e.g. "XFi-v2.1.0-universal.apk").
             val universalCandidates = apkAssets.filter { asset ->
                 val name = asset.name.lowercase()
                 knownAndroidArchTokens.none { it in name }
@@ -302,7 +302,7 @@ class AppUpdateService(
          * Desktop release asset for this OS/arch.
          *
          * Requiring BOTH an os and an arch token (the old rule) matched NOTHING in a real release:
-         * the files are named "YPtun-3.3.2-x64-installer.exe" — no "windows" in the name and "x64"
+         * the files are named "XFi-3.3.2-x64-installer.exe" — no "windows" in the name and "x64"
          * rather than "amd64" — so the desktop updater has never found an asset, on either arch.
          * Match on any spelling of the arch instead, refuse assets that name a DIFFERENT os, and
          * prefer one that does carry our os token when the release has both kinds.

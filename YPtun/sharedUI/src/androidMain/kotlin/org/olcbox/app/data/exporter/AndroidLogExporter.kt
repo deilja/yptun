@@ -21,11 +21,11 @@ class AndroidLogExporter(private val context: Context) : LogExporter {
         return runCatching {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, "YPtun logs")
+                putExtra(Intent.EXTRA_SUBJECT, "XFi logs")
                 putExtra(Intent.EXTRA_TEXT, content)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            val chooser = Intent.createChooser(intent, "Share YPtun logs")
+            val chooser = Intent.createChooser(intent, "Share XFi logs")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
             "Logs share sheet opened"

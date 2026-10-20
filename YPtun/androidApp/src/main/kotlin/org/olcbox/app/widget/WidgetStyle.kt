@@ -58,7 +58,7 @@ data class WidgetStyle(
             0xFFE9EAEC.toInt(), // white
         )
 
-        private const val PREFS = "yptun_widget_style"
+        private const val PREFS = "xfi_widget_style"
 
         fun load(context: Context, widgetId: Int): WidgetStyle {
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

@@ -1,25 +1,19 @@
 <div align="center">
 
-# YPtun
+# XFi
 
 ### VPN-клиент для обхода блокировок · Android, Windows и Linux · iOS в бете
+
+> **XFi** — форк проекта [YPtun](https://github.com/yanisplugg/yptun) (автор: yanisplugg), клиент сервиса **XFi VPN** (бот: [@XFI_VPN_bot](https://t.me/XFI_VPN_bot)). Изменены имя, идентификатор приложения, канал обновлений и ссылки; донаты автору оригинала убраны. Лицензия та же — **GPL-3.0**, авторство оригинала сохраняется.
 
 *VLESS · Reality · XHTTP поверх **Xray** и **sing-box**, **Hysteria2** (QUIC), обфусцированный **AmneziaWG**, туннель через звонки **VK-TURN**, DNS-туннель **MasterDNS**, отдельный Telegram-прокси через **WARP** — и **olcRTC**, маскирующий трафик под видеозвонок.*
 
 <br>
 
-[![Последний релиз](https://img.shields.io/github/v/release/yanisplugg/yptun?style=for-the-badge&color=4c8eff&label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C)](https://github.com/yanisplugg/yptun/releases/latest)
-[![Загрузки](https://img.shields.io/github/downloads/yanisplugg/yptun/total?style=for-the-badge&color=2ea043&label=%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8)](https://github.com/yanisplugg/yptun/releases)
-[![Звёзды](https://img.shields.io/github/stars/yanisplugg/yptun?style=for-the-badge&color=f0b429)](https://github.com/yanisplugg/yptun/stargazers)
+[![Последний релиз](https://img.shields.io/github/v/release/deilja/yptun?style=for-the-badge&color=4c8eff&label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C)](https://github.com/deilja/yptun/releases/latest)
+[![Загрузки](https://img.shields.io/github/downloads/deilja/yptun/total?style=for-the-badge&color=2ea043&label=%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8)](https://github.com/deilja/yptun/releases)
+[![Звёзды](https://img.shields.io/github/stars/deilja/yptun?style=for-the-badge&color=f0b429)](https://github.com/deilja/yptun/stargazers)
 
-💎 **Поддержать проект** — TON или USDT (сеть TON):
-
-```
-UQAPC9J9UY8oaYV4AwjEAYIIJMswo7qVzJDkf4pzY8kVtzJ-
-```
-
-🇷🇺 **Поддержать из России** — через DonationAlerts:<br>
-[![DonationAlerts](https://img.shields.io/badge/DonationAlerts-%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B0%D1%82%D1%8C-F57D07?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://www.donationalerts.com/r/yanisplugg)
 
 ![Платформа](https://img.shields.io/badge/%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0-Android%206.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white)
 ![Платформа](https://img.shields.io/badge/%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0-Windows%2010%2B-0078d4?style=flat-square&logo=windows&logoColor=white)
@@ -87,7 +81,7 @@ UQAPC9J9UY8oaYV4AwjEAYIIJMswo7qVzJDkf4pzY8kVtzJ-
 
 ## Скачать
 
-Бери последний подписанный APK со **[страницы релизов](https://github.com/yanisplugg/yptun/releases/latest)**.
+Бери последний подписанный APK со **[страницы релизов](https://github.com/deilja/yptun/releases/latest)**.
 
 | Сборка | Кому |
 |--------|------|

@@ -6,7 +6,7 @@
         launch/splash screen is black instead of the platform's grey, matching
         the in-app background.
     -->
-    <style name="Theme.YPtun" parent="@android:style/Theme.Material.NoActionBar">
+    <style name="Theme.XFi" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@android:color/black</item>
     </style>
 </resources>
