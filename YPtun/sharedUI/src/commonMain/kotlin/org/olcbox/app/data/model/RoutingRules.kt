@@ -12,10 +12,10 @@ import kotlinx.serialization.json.jsonArray
 data class RoutingRules(
     /** Send private/LAN ranges straight out (not through the proxy). */
     val bypassLan: Boolean = true,
-    /** Block ad/tracker domains (geosite category-ads). */
-    val blockAds: Boolean = false,
-    /** Send Russian sites/IPs directly (geoip-ru + geosite-ru). */
-    val bypassRussia: Boolean = false,
+    /** Block ad/tracker domains (geosite category-ads). XFi default: on. */
+    val blockAds: Boolean = true,
+    /** Send Russian sites/IPs directly (geoip-ru + geosite-ru). XFi default: on. */
+    val bypassRussia: Boolean = true,
     /** User domains routed directly (domain suffixes). */
     val directDomains: List<String> = emptyList(),
     /** User domains blocked (domain suffixes). */
