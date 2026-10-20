@@ -4646,7 +4646,7 @@ class OlcboxVpnService : VpnService() {
                 )
             )
         }
-        val statIcon = resources.getIdentifier("ic_stat_yptun", "drawable", packageName)
+        val statIcon = resources.getIdentifier("ic_stat_xfi", "drawable", packageName)
             .takeIf { it != 0 } ?: android.R.drawable.ic_lock_lock
         val notification = NotificationCompat.Builder(this, VK_CAPTCHA_CHANNEL_ID)
             .setSmallIcon(statIcon)

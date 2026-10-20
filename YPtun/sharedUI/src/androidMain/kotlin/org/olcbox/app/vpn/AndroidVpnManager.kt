@@ -346,7 +346,7 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
         // Status-bar icon resolved by name (it lives in androidApp's resources, not sharedUI's R),
         // with a system fallback — same approach as the foreground-service notification.
         val icon = appContext.resources
-            .getIdentifier("ic_stat_yptun", "drawable", appContext.packageName)
+            .getIdentifier("ic_stat_xfi", "drawable", appContext.packageName)
             .takeIf { it != 0 } ?: android.R.drawable.ic_lock_idle_alarm
 
         subscriptions.forEach { sub ->
@@ -402,7 +402,7 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
             manager.createNotificationChannel(channel)
         }
         val icon = appContext.resources
-            .getIdentifier("ic_stat_yptun", "drawable", appContext.packageName)
+            .getIdentifier("ic_stat_xfi", "drawable", appContext.packageName)
             .takeIf { it != 0 } ?: android.R.drawable.ic_dialog_info
 
         var changed = false

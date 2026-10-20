@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  XFi status-bar / Quick-Settings tile icon: a bold geometric "X" silhouette.
+  Android forces a single-colour (alpha-only) render here, so a solid white
+  silhouette is the only thing that reads correctly in the dense status bar.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4.2,3.0 L9.3,3.0 L12.0,7.1 L14.7,3.0 L19.8,3.0 L14.55,12.0 L19.8,21.0 L14.7,21.0 L12.0,16.9 L9.3,21.0 L4.2,21.0 L9.45,12.0 Z" />
+</vector>

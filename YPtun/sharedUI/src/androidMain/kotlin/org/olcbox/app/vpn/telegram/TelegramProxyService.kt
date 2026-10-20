@@ -477,7 +477,7 @@ class TelegramProxyService : Service() {
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
                 .createNotificationChannel(channel)
         }
-        val icon = resources.getIdentifier("ic_stat_yptun", "drawable", packageName)
+        val icon = resources.getIdentifier("ic_stat_xfi", "drawable", packageName)
             .takeIf { it != 0 } ?: android.R.drawable.ic_lock_lock
         // One-tap "Stop" in the notification: stops the proxy and turns the toggle off.
         val stopIntent = Intent(this, TelegramProxyService::class.java).setAction(ACTION_STOP)
