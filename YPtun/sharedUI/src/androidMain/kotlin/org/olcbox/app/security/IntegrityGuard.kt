@@ -23,15 +23,13 @@ import java.security.MessageDigest
 object IntegrityGuard {
 
     /**
-     * SHA-256 (lowercase hex, no separators) of the official XFi release signing certificate.
-     *
-     * TODO(XFi): PLACEHOLDER — all-zeroes until the XFi release keystore is generated at the first
-     * release build; replace with the real certificate SHA-256 (keytool -list -v) BEFORE publishing
-     * any release. While this is a placeholder, every build reads as "unofficial" (one-time warning)
-     * and downloaded update APKs are rejected — the safe failure mode.
+     * SHA-256 (lowercase hex, no separators) of the official XFi release signing certificate
+     * (`xfi-release.keystore`, alias `xfi`, CN=XFi; generated 2026-10-20 for the first XFi
+     * release). The keystore itself is NOT in git — it lives with the maintainer; losing it
+     * means losing the ability to update the app, so keep an offline backup.
      */
     const val OFFICIAL_SIGNING_SHA256 =
-        "0000000000000000000000000000000000000000000000000000000000000000"
+        "5e92621c193c2d8d3cfe159291915b533d28c29f64e2619de20612d873e0796e"
 
     /** SHA-256 of the cert the INSTALLED app is signed with (lowercase hex), or null if unreadable. */
     fun installedSigningSha256(context: Context): String? =
