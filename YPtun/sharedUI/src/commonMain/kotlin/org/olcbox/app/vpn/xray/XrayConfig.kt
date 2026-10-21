@@ -1933,7 +1933,12 @@ object XrayConfig {
                 if (profile.path.isNotBlank()) put("path", profile.path)
                 if (profile.host.isNotBlank()) put("host", profile.host)
                 // The server may pin a mode (e.g. packet-up) and then refuses the one "auto" picks.
-                put("mode", profile.xhttpMode.ifBlank { "auto" })
+                // XFi: an "auto" (or blank) link mode resolves to packet-up on Reality in practice,
+                // which caps throughput at ~30 Mbps (measured vs 120 in stream mode on the same
+                // server). A server set to "auto" accepts stream-up, so upgrade it; explicit
+                // modes from the link are always respected.
+                val linkMode = profile.xhttpMode.ifBlank { "auto" }
+                put("mode", if (linkMode == "auto") "stream-up" else linkMode)
                 // Cascade base: spread the loopback's per-app-flow tunnels across a SMALL POOL of reused
                 // H2 connections (4-8). Funnelling everything onto 1 connection (high maxConcurrency)
                 // chokes on H2 head-of-line blocking; opening one-per-flow (no xmux) overran the server
