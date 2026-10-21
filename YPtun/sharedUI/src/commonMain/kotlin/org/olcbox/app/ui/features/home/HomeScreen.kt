@@ -100,7 +100,6 @@ fun HomeScreen(
     scrollState: LazyListState,
     onToggleClick: () -> Unit = { viewModel.ToggleVpn() },
     onTelegramRescueClick: () -> Unit = { viewModel.connectTelegramRescue() },
-    onYoutubeDirectClick: () -> Unit = { viewModel.connectYoutubeDirect() },
     onImportFileRequested: () -> Unit = {},
     onImportFromClipboardRequested: (onImported: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _ -> },
     onScanQrRequested: () -> Unit = {},
@@ -580,33 +579,6 @@ fun HomeScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(s.telegramRescueTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                             Text(s.telegramRescueHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Icon(Icons.Rounded.PowerSettingsNew, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
-
-            item(key = "xfi-youtube-direct") {
-                // XFi: YouTube-direct TEST — video from the user's own connection with on-device
-                // DPI bypass (fragmented ClientHello), no XFi server in the path. The click is
-                // routed through the platform VPN-permission flow by the caller, like the card
-                // above. See BuiltinYoutube.kt.
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .clickable { onYoutubeDirectClick() }
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(Icons.Outlined.PlayArrow, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(s.youtubeDirectTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text(s.youtubeDirectHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Icon(Icons.Rounded.PowerSettingsNew, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
