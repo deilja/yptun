@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class TrafficSettings(
-    /** DNS used for proxied traffic (resolved through the proxy, no leak). */
-    val remoteDns: String = "8.8.8.8",
+    /** DNS used for proxied traffic (resolved through the proxy, no leak). XFi: AdGuard Home on the Finland server (ad/tracker filtering for clients). */
+    val remoteDns: String = "2.27.52.105",
     /** Optional SECOND remote DNS, also resolved through the proxy (fallback resolver). Blank = none. */
     val remoteDns2: String = "",
     /** DNS used for direct/bootstrap lookups (e.g. resolving the proxy server domain). */
@@ -49,7 +49,9 @@ data class TrafficSettings(
     fun normalized(): TrafficSettings = copy(
         // FakeDNS is per-config now (honored verbatim from the location's own raw config), never global.
         fakeDnsEnabled = false,
-        remoteDns = remoteDns.trim().ifBlank { "8.8.8.8" },
+        // XFi migration: installs that still carry the old shipped default (8.8.8.8) — including
+        // settings persisted before the AdGuard Home rollout — move to the XFi AGH resolver.
+        remoteDns = remoteDns.trim().let { if (it.isBlank() || it == "8.8.8.8") "2.27.52.105" else it },
         remoteDns2 = remoteDns2.trim(),
         directDns = directDns.trim().let { if (it.isBlank() || it == "223.5.5.5") "77.88.8.8" else it },
         domainStrategy = domainStrategy.takeIf { it in STRATEGIES } ?: "ipv4_only",
