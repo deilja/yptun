@@ -36,6 +36,8 @@ import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
 import org.olcbox.app.data.model.LocationEntry
 import org.olcbox.app.data.model.SubscriptionMetadata
 import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
+import org.olcbox.app.data.model.BUILTIN_YOUTUBE_ID
+import org.olcbox.app.data.model.ensureBuiltinYoutubeLocation
 import org.olcbox.app.data.repository.LocationsRepository
 import org.olcbox.app.data.share.YptunInboundCodec
 import org.olcbox.app.ui.features.home.components.FreeServerItem
@@ -217,6 +219,25 @@ class HomeScreenViewModel(
             try {
                 ensureBuiltinTelegramLocation(locationsRepository)
                 locationsRepository.setActiveLocationId(BUILTIN_TELEGRAM_ID)
+                loadCurrentConfigNow()
+                vpnManager.startVpn()
+            } catch (e: Exception) {
+                _state.update { it.copy(isVpnLoading = false) }
+            }
+        }
+    }
+
+    /**
+     * XFi: connect the built-in "YouTube direct" TEST profile (see BuiltinYoutube.kt) — all
+     * traffic leaves via the device's own network, YouTube through a fragmenting outbound that
+     * tries to slip past the local DPI. Mirrors [connectTelegramRescue].
+     */
+    fun connectYoutubeDirect() {
+        viewModelScope.launch {
+            _state.update { it.copy(isVpnLoading = true, connectError = null) }
+            try {
+                ensureBuiltinYoutubeLocation(locationsRepository)
+                locationsRepository.setActiveLocationId(BUILTIN_YOUTUBE_ID)
                 loadCurrentConfigNow()
                 vpnManager.startVpn()
             } catch (e: Exception) {

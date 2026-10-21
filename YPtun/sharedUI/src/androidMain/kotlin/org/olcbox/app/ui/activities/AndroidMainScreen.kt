@@ -354,6 +354,7 @@ fun AndroidMainScreen(
             when (val action = pendingVpnAction.value) {
                 PendingVpnPermissionAction.Toggle -> viewModel.ToggleVpn()
                 PendingVpnPermissionAction.TelegramRescue -> viewModel.connectTelegramRescue()
+                PendingVpnPermissionAction.YoutubeDirect -> viewModel.connectYoutubeDirect()
                 is PendingVpnPermissionAction.RestartWithMode -> {
                     vpnManager.selectConnectionMode(action.mode)
                     viewModel.restartVpnIfRunning()
@@ -491,6 +492,20 @@ fun AndroidMainScreen(
                 vpnRequestLauncher.launch(prepIntent)
             } else {
                 viewModel.connectTelegramRescue()
+            }
+        },
+        onYoutubeDirectClick = {
+            // Same permission flow as the Telegram-rescue card above.
+            val prepIntent = if (connectionMode == AndroidConnectionMode.Tun) {
+                VpnService.prepare(context)
+            } else {
+                null
+            }
+            if (prepIntent != null) {
+                pendingVpnAction.value = PendingVpnPermissionAction.YoutubeDirect
+                vpnRequestLauncher.launch(prepIntent)
+            } else {
+                viewModel.connectYoutubeDirect()
             }
         },
         onImportFileRequested = {
@@ -841,6 +856,7 @@ fun AndroidMainScreen(
 private sealed class PendingVpnPermissionAction {
     object Toggle : PendingVpnPermissionAction()
     object TelegramRescue : PendingVpnPermissionAction()
+    object YoutubeDirect : PendingVpnPermissionAction()
     data class RestartWithMode(val mode: AndroidConnectionMode) : PendingVpnPermissionAction()
 }
 

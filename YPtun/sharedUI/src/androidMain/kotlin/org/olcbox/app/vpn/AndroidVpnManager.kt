@@ -42,6 +42,7 @@ import org.olcbox.app.data.model.LocationConfig
 import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
 import org.olcbox.app.data.model.TELEGRAM_RESCUE_PACKAGES
 import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
+import org.olcbox.app.data.model.ensureBuiltinYoutubeLocation
 import org.olcbox.app.data.datasource.LocationsDataSourceImpl
 import org.olcbox.app.data.datasource.LocationsRepositoryImpl
 import org.olcbox.app.data.identity.PersistentDeviceIdentityProvider
@@ -186,6 +187,7 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
         // present, re-added if the user deleted it, never touches other locations.
         scope.launch {
             runCatching { ensureBuiltinTelegramLocation(locationsRepository) }
+            runCatching { ensureBuiltinYoutubeLocation(locationsRepository) }
         }
 
         scope.launch {
