@@ -40,7 +40,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.VpnKey
+import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -97,6 +99,7 @@ fun HomeScreen(
     locationViewModel: LocationViewModel,
     scrollState: LazyListState,
     onToggleClick: () -> Unit = { viewModel.ToggleVpn() },
+    onTelegramRescueClick: () -> Unit = { viewModel.connectTelegramRescue() },
     onImportFileRequested: () -> Unit = {},
     onImportFromClipboardRequested: (onImported: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _ -> },
     onScanQrRequested: () -> Unit = {},
@@ -551,6 +554,33 @@ fun HomeScreen(
                             Text(s.supportVpnSubHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Icon(Icons.AutoMirrored.Rounded.OpenInNew, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    }
+                }
+            }
+
+            item(key = "xfi-telegram") {
+                // XFi: Telegram rescue — for a user whose Telegram is blocked outright, so the
+                // bot card above can't be reached at all. One tap connects the built-in service
+                // profile that routes ONLY the Telegram apps (see BuiltinTelegram.kt); the click
+                // itself is routed through the platform VPN-permission flow by the caller.
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable { onTelegramRescueClick() }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.Send, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(s.telegramRescueTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(s.telegramRescueHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icon(Icons.Rounded.PowerSettingsNew, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
                 }
             }

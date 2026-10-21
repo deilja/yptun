@@ -39,8 +39,13 @@ import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING
 import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING_PROFILES
 import org.olcbox.app.vpn.data.KEY_ANDROID_TRAFFIC
 import org.olcbox.app.data.model.LocationConfig
+import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
+import org.olcbox.app.data.model.TELEGRAM_RESCUE_PACKAGES
+import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
 import org.olcbox.app.data.datasource.LocationsDataSourceImpl
+import org.olcbox.app.data.datasource.LocationsRepositoryImpl
 import org.olcbox.app.data.identity.PersistentDeviceIdentityProvider
+import org.olcbox.app.data.repository.LocationsRepository
 import org.olcbox.app.data.repository.SubscriptionFetchProxy
 import org.olcbox.app.vpn.data.KEY_ANDROID_CONNECTED_SINCE
 import org.olcbox.app.vpn.data.KEY_ANDROID_CONNECTION_MODE
@@ -81,6 +86,16 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
     private val deviceIdentityProvider = PersistentDeviceIdentityProvider(
         LocationsDataSourceImpl(appContext)
     )
+
+    /**
+     * Own locations repository (the same pattern as OlcboxVpnService): the bundle lives in a
+     * shared file and the datasource version token keeps reads consistent across instances.
+     * Used to seed the built-in Telegram rescue location and to resolve the active location
+     * when building the service intent.
+     */
+    private val locationsRepository: LocationsRepository by lazy {
+        LocationsRepositoryImpl(LocationsDataSourceImpl(appContext))
+    }
 
     override val logs: StateFlow<List<String>> = OlcboxVpnState.logs
     override val status: StateFlow<VpnStatus> = OlcboxVpnState.status
@@ -164,6 +179,14 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
                 }
         }
         refreshInstalledApps()
+
+        // XFi: seed the built-in "Telegram rescue" location (see BuiltinTelegram.kt) so it is
+        // always present in the user's bundle — the home card connects it for a user whose
+        // Telegram is blocked before they have any subscription. Idempotent: a no-op once
+        // present, re-added if the user deleted it, never touches other locations.
+        scope.launch {
+            runCatching { ensureBuiltinTelegramLocation(locationsRepository) }
+        }
 
         scope.launch {
             _hwid.value = runCatching { deviceIdentityProvider.hwid() }.getOrDefault("")
@@ -726,6 +749,30 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
     }
 
     private fun sendStartVpnIntent() {
+        // The split-tunnel extras depend on WHICH location is active (the built-in Telegram
+        // rescue profile forces Telegram-only routing — see the overload), and the active id
+        // lives in the locations bundle, so resolve it first, then fire the intent.
+        scope.launch {
+            val activeLocationId = runCatching { locationsRepository.getActiveLocationId() }.getOrNull()
+            sendStartVpnIntent(activeLocationId)
+        }
+    }
+
+    private fun sendStartVpnIntent(activeLocationId: String?) {
+        // Built-in Telegram rescue active: route ONLY the Telegram apps into the tunnel,
+        // whatever the user's global split-tunnel setting says. This is an intent-local
+        // override ONLY — the stored setting (_splitTunnelSettings / DataStore) is not
+        // touched, so the next normal start uses the user's own choice again. The profile's
+        // raw Xray config independently fences traffic to Telegram destinations.
+        val splitTunnel = if (activeLocationId == BUILTIN_TELEGRAM_ID) {
+            AndroidSplitTunnelSettings(
+                mode = AndroidSplitTunnelMode.ProxySelected,
+                proxyPackages = TELEGRAM_RESCUE_PACKAGES.toSet(),
+                bypassPackages = emptySet()
+            )
+        } else {
+            _splitTunnelSettings.value
+        }
         val intent = Intent().apply {
             setClassName(context.packageName, OlcboxVpnActions.SERVICE_CLASS_NAME)
             action = OlcboxVpnActions.ACTION_START_VPN
@@ -734,14 +781,14 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
             putExtra(OlcboxVpnActions.EXTRA_SOCKS_PORT, _proxySettings.value.port)
             putExtra(OlcboxVpnActions.EXTRA_SOCKS_USERNAME, _proxySettings.value.username)
             putExtra(OlcboxVpnActions.EXTRA_SOCKS_PASSWORD, _proxySettings.value.password)
-            putExtra(OlcboxVpnActions.EXTRA_SPLIT_TUNNEL_MODE, _splitTunnelSettings.value.mode.value)
+            putExtra(OlcboxVpnActions.EXTRA_SPLIT_TUNNEL_MODE, splitTunnel.mode.value)
             putStringArrayListExtra(
                 OlcboxVpnActions.EXTRA_SPLIT_TUNNEL_PROXY_APPS,
-                ArrayList(_splitTunnelSettings.value.proxyPackages)
+                ArrayList(splitTunnel.proxyPackages)
             )
             putStringArrayListExtra(
                 OlcboxVpnActions.EXTRA_SPLIT_TUNNEL_BYPASS_APPS,
-                ArrayList(_splitTunnelSettings.value.bypassPackages)
+                ArrayList(splitTunnel.bypassPackages)
             )
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

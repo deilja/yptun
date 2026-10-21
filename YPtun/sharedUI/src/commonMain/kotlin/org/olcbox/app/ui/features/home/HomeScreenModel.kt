@@ -32,8 +32,10 @@ import org.olcbox.app.data.model.LocationMetadata
 import org.olcbox.app.data.model.ProxyProfile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
 import org.olcbox.app.data.model.LocationEntry
 import org.olcbox.app.data.model.SubscriptionMetadata
+import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
 import org.olcbox.app.data.repository.LocationsRepository
 import org.olcbox.app.data.share.YptunInboundCodec
 import org.olcbox.app.ui.features.home.components.FreeServerItem
@@ -194,6 +196,29 @@ class HomeScreenViewModel(
                     }
                     vpnManager.startVpn()
                 }
+            } catch (e: Exception) {
+                _state.update { it.copy(isVpnLoading = false) }
+            }
+        }
+    }
+
+    /**
+     * XFi "Telegram rescue" (the home card under the bot card): connects the built-in service
+     * profile ([BUILTIN_TELEGRAM_ID]) that routes ONLY the Telegram apps to the XFi bot, for a
+     * user whose Telegram is blocked before they have any subscription. Ensures the profile is
+     * seeded, makes it active and starts the VPN — when already connected, startVpn()'s
+     * ACTION_START_VPN restart switches the live tunnel onto it (the same path
+     * [restartVpnIfRunning] relies on). The platform layer routes the actual click through the
+     * VPN-permission flow first (Android: VpnService.prepare), exactly like the main toggle.
+     */
+    fun connectTelegramRescue() {
+        viewModelScope.launch {
+            _state.update { it.copy(isVpnLoading = true, connectError = null) }
+            try {
+                ensureBuiltinTelegramLocation(locationsRepository)
+                locationsRepository.setActiveLocationId(BUILTIN_TELEGRAM_ID)
+                loadCurrentConfigNow()
+                vpnManager.startVpn()
             } catch (e: Exception) {
                 _state.update { it.copy(isVpnLoading = false) }
             }

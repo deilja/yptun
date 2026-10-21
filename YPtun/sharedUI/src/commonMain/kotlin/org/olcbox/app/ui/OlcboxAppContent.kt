@@ -26,6 +26,9 @@ fun OlcboxAppContent(
     currentScreen: AppScreen,
     onNavigate: (AppScreen) -> Unit,
     onToggleClick: () -> Unit,
+    // XFi Telegram-rescue card click. Android overrides this to run the VPN-permission flow
+    // first (like onToggleClick); other platforms connect directly through the view model.
+    onTelegramRescueClick: () -> Unit = { homeViewModel.connectTelegramRescue() },
     onImportFileRequested: () -> Unit,
     onImportFromClipboardRequested: (onImported: () -> Unit, onError: (String) -> Unit) -> Unit,
     onScanQrRequested: () -> Unit = {},
@@ -118,6 +121,7 @@ fun OlcboxAppContent(
                     locationViewModel = locationViewModel,
                     scrollState = homeScrollState,
                     onToggleClick = onToggleClick,
+                    onTelegramRescueClick = onTelegramRescueClick,
                     onImportFileRequested = onImportFileRequested,
                     onImportFromClipboardRequested = onImportFromClipboardRequested,
                     onScanQrRequested = onScanQrRequested,

@@ -353,6 +353,7 @@ fun AndroidMainScreen(
         if (result.resultCode == Activity.RESULT_OK) {
             when (val action = pendingVpnAction.value) {
                 PendingVpnPermissionAction.Toggle -> viewModel.ToggleVpn()
+                PendingVpnPermissionAction.TelegramRescue -> viewModel.connectTelegramRescue()
                 is PendingVpnPermissionAction.RestartWithMode -> {
                     vpnManager.selectConnectionMode(action.mode)
                     viewModel.restartVpnIfRunning()
@@ -475,6 +476,21 @@ fun AndroidMainScreen(
                 vpnRequestLauncher.launch(prepIntent)
             } else {
                 viewModel.ToggleVpn()
+            }
+        },
+        onTelegramRescueClick = {
+            // Same VPN-permission dance as the main toggle: prepare() first when in Tun mode,
+            // connect right away when the permission is already granted (or not needed).
+            val prepIntent = if (connectionMode == AndroidConnectionMode.Tun) {
+                VpnService.prepare(context)
+            } else {
+                null
+            }
+            if (prepIntent != null) {
+                pendingVpnAction.value = PendingVpnPermissionAction.TelegramRescue
+                vpnRequestLauncher.launch(prepIntent)
+            } else {
+                viewModel.connectTelegramRescue()
             }
         },
         onImportFileRequested = {
@@ -824,6 +840,7 @@ fun AndroidMainScreen(
 
 private sealed class PendingVpnPermissionAction {
     object Toggle : PendingVpnPermissionAction()
+    object TelegramRescue : PendingVpnPermissionAction()
     data class RestartWithMode(val mode: AndroidConnectionMode) : PendingVpnPermissionAction()
 }
 

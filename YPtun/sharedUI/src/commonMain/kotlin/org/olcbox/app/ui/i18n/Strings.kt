@@ -208,6 +208,8 @@ interface Strings {
     val supportDonationAlertsHint: String
     val supportVpnSub: String
     val supportVpnSubHint: String
+    val telegramRescueTitle: String
+    val telegramRescueHint: String
     val supportGithubStar: String
     val supportGithubStarHint: String
 
@@ -1013,6 +1015,8 @@ object RuStrings : Strings {
     override val supportDonationAlertsHint = "Карты РФ, СБП · для России"
     override val supportVpnSub = "Подписка и личный кабинет XFi"
     override val supportVpnSubHint = "Ключи, оплата и управление подпиской · Telegram @XFI_VPN_bot"
+    override val telegramRescueTitle = "Telegram не открывается?"
+    override val telegramRescueHint = "Служебный режим: включит только Telegram — дойти до бота и оформить подписку"
     override val supportGithubStar = "Поставить звезду на GitHub"
     override val supportGithubStarHint = "Бесплатный способ помочь проекту"
     override val autoConnectTitle = "Автоподключение при запуске"
@@ -1774,6 +1778,8 @@ object EnStrings : Strings {
     override val supportDonationAlertsHint = "Cards, SBP · for Russia"
     override val supportVpnSub = "XFi subscription & account"
     override val supportVpnSubHint = "Keys, payment and subscription management · Telegram @XFI_VPN_bot"
+    override val telegramRescueTitle = "Telegram won't open?"
+    override val telegramRescueHint = "Service mode: Telegram only — reach the bot and get your subscription"
     override val supportGithubStar = "Star the project on GitHub"
     override val supportGithubStarHint = "A free way to help the project"
     override val autoConnectTitle = "Auto-connect on launch"
@@ -2535,6 +2541,8 @@ object FaStrings : Strings {
     override val supportDonationAlertsHint = "کارت و SBP · برای روسیه"
     override val supportVpnSub = "اشتراک و حساب کاربری XFi"
     override val supportVpnSubHint = "کلیدها، پرداخت و مدیریت اشتراک · تلگرام @XFI_VPN_bot"
+    override val telegramRescueTitle = "Telegram won't open?"
+    override val telegramRescueHint = "Service mode: Telegram only — reach the bot and get your subscription"
     override val supportGithubStar = "ستاره‌ی GitHub بدهید"
     override val supportGithubStarHint = "راهی رایگان برای کمک به پروژه"
     override val autoConnectTitle = "اتصال خودکار هنگام اجرا"
@@ -3296,6 +3304,8 @@ object ZhStrings : Strings {
     override val supportDonationAlertsHint = "俄罗斯银行卡、SBP · 适用于俄罗斯"
     override val supportVpnSub = "XFi 订阅与个人账户"
     override val supportVpnSubHint = "密钥、付款与订阅管理 · Telegram @XFI_VPN_bot"
+    override val telegramRescueTitle = "Telegram won't open?"
+    override val telegramRescueHint = "Service mode: Telegram only — reach the bot and get your subscription"
     override val supportGithubStar = "在 GitHub 上点个星标"
     override val supportGithubStarHint = "免费支持项目的方式"
     override val autoConnectTitle = "启动时自动连接"
