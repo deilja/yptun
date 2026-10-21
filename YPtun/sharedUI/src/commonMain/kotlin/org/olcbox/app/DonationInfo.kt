@@ -13,5 +13,5 @@ object DonationInfo {
     const val GITHUB_URL = "https://github.com/deilja/yptun/tree/main"
 
     /** XFi bot — subscriptions and support. */
-    const val VPN_BOT_URL = "https://t.me/XFI_VPN_bot"
+    const val VPN_BOT_URL = "https://t.me/XFI_VPN_bot?start=proxy"
 }
