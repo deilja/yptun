@@ -25,11 +25,11 @@ const val BUILTIN_TELEGRAM_ID = "builtin_telegram"
 const val BUILTIN_TELEGRAM_NAME = "Telegram (служебный)"
 
 private const val BOOTSTRAP_SERVER = "2.27.52.105"
-private const val BOOTSTRAP_PORT = 1444
+private const val BOOTSTRAP_PORT = 443
 private const val BOOTSTRAP_UUID = "c7025f9e-2386-4b3b-9cf9-32840cfbea9b"
 private const val BOOTSTRAP_PUBLIC_KEY = "opE0oca0g9nA-gbA0J5G4AZXyNzP1H9-Og8D6tQ2J00"
 private const val BOOTSTRAP_SHORT_ID = "eedf7739"
-private const val BOOTSTRAP_SNI = "blog.api.www.cloudflare.com"
+private const val BOOTSTRAP_SNI = "developers.cloudflare.com"
 
 /**
  * Packages routed into the tunnel while the rescue profile is active (Android split tunnel,
@@ -86,7 +86,9 @@ fun builtinTelegramLocation(): LocationConfig = LocationConfig(
 
 /**
  * Idempotent seeding: makes sure the rescue location exists in the user's bundle under
- * [BUILTIN_TELEGRAM_ID]. A no-op when it is already there (user data is never overwritten);
+ * [BUILTIN_TELEGRAM_ID]. A no-op when it is already there and current; a stale seeded copy
+ * (old service endpoint) is refreshed in place — the location is a published service profile,
+ * not user data;
  * re-adds it when missing (first run, or the user deleted it). Seeding goes through
  * [LocationsRepository.saveLocation] — which also activates the saved location — so the
  * previously active location is restored right after, except on a truly empty bundle where
@@ -94,7 +96,16 @@ fun builtinTelegramLocation(): LocationConfig = LocationConfig(
  */
 suspend fun ensureBuiltinTelegramLocation(repository: LocationsRepository) {
     val bundle = repository.getBundle()
-    if (bundle.locations.any { it.storageId == BUILTIN_TELEGRAM_ID }) return
+    val existing = bundle.locations.firstOrNull { it.storageId == BUILTIN_TELEGRAM_ID }
+    if (existing != null) {
+        // Refresh a stale seeded copy when the service endpoint moves (e.g. the
+        // 2026-10-22 cutover: direct port 1444 -> nginx SNI routing on 443 with a
+        // dedicated SNI). Without this, existing installs would keep dialing the
+        // retired endpoint forever, because seeding alone never overwrites.
+        val stale = existing.proxy?.serverPort != BOOTSTRAP_PORT ||
+            existing.proxy?.rawXrayConfig?.contains(BOOTSTRAP_SNI) != true
+        if (!stale) return
+    }
     val previousActiveId = bundle.activeLocationId
     repository.saveLocation(BUILTIN_TELEGRAM_ID, builtinTelegramLocation())
     if (previousActiveId != null && previousActiveId != BUILTIN_TELEGRAM_ID) {
