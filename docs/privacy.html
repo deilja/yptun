@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -182,106 +182,532 @@
         footer a:hover {
             color: var(--text-main);
         }
+    
+        /* language switching: only the block of the active language is shown (English without JS) */
+        html[data-lang="en"] [data-l]:not([data-l="en"]),
+        html[data-lang="ru"] [data-l]:not([data-l="ru"]),
+        html[data-lang="zh"] [data-l]:not([data-l="zh"]),
+        html[data-lang="fa"] [data-l]:not([data-l="fa"]) { display: none !important; }
+
+        main { overflow-wrap: break-word; }
+        .nav-container { gap: 10px 20px; }
+        .nav-right { display: flex; align-items: center; gap: 20px; justify-content: flex-end; }
+        .nav-links { flex-wrap: wrap; gap: 6px 22px; }
+        .lang-switch { display: flex; gap: 4px; flex-shrink: 0; }
+        .lang-switch button {
+            font: inherit; font-size: 0.8rem; line-height: 1;
+            padding: 6px 9px; border-radius: 8px; cursor: pointer;
+            color: var(--text-secondary); background: transparent;
+            border: 1px solid var(--surface-border);
+        }
+        .lang-switch button:hover { color: var(--text-main); }
+        html[data-lang="en"] .lang-switch [data-set="en"],
+        html[data-lang="ru"] .lang-switch [data-set="ru"],
+        html[data-lang="zh"] .lang-switch [data-set="zh"],
+        html[data-lang="fa"] .lang-switch [data-set="fa"] {
+            color: var(--text-main); background: var(--surface); border-color: var(--text-muted);
+        }
+        html[dir="rtl"] ul { margin: 12px 20px 18px 0; }
+        .btn-primary { overflow-wrap: anywhere; }
+        header, footer { overflow-wrap: anywhere; }
+
+        /* phone: row 1 = logo + language, row 2 = menu (wraps instead of running off screen) */
+        @media (max-width: 720px) {
+            .nav-container { flex-wrap: wrap; padding: 12px 16px; }
+            .nav-right { display: contents; }
+            .logo { order: 1; }
+            .lang-switch { order: 2; margin-inline-start: auto; }
+            .nav-links { order: 3; width: 100%; }
+            .nav-links a { overflow-wrap: anywhere; max-width: 100%; }
+            .nav-links a, footer a { font-size: 0.9rem; }
+            main { margin: 32px auto 64px; padding: 0 16px; }
+            .doc-header h1, .support-header h1 { font-size: 1.75rem; }
+            .contact-card { padding: 24px 18px; }
+            .btn-primary { display: block; text-align: center; padding: 12px 16px; border-radius: 16px; }
+            footer { padding: 28px 16px; line-height: 1.9; }
+            footer a { margin: 0 3px; }
+        }
     </style>
+
+<script>
+(function () {
+    var L = ["en", "ru", "zh", "fa"], T = {"en": "Privacy Policy - YPtun", "ru": "Политика конфиденциальности - YPtun", "zh": "隐私政策 - YPtun", "fa": "سیاست حریم خصوصی - YPtun"};
+    var CODE = { en: "en", ru: "ru", zh: "zh-CN", fa: "fa" };
+    function fromBrowser() {
+        var n = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+        for (var i = 0; i < n.length; i++) {
+            var c = String(n[i]).toLowerCase().split("-")[0];
+            if (c === "prs") c = "fa";
+            if (L.indexOf(c) > -1) return c;
+        }
+        return "en";
+    }
+    function pick() {
+        try { var q = new URLSearchParams(location.search).get("lang"); if (q && L.indexOf(q) > -1) return q; } catch (e) {}
+        try { var s = localStorage.getItem("lang"); if (s && L.indexOf(s) > -1) return s; } catch (e) {}
+        return fromBrowser();
+    }
+    function apply(l) {
+        var h = document.documentElement;
+        h.setAttribute("data-lang", l);
+        h.setAttribute("lang", CODE[l]);
+        h.setAttribute("dir", l === "fa" ? "rtl" : "ltr");
+        document.title = T[l];
+    }
+    apply(pick());
+    document.addEventListener("DOMContentLoaded", function () {
+        var b = document.querySelectorAll(".lang-switch [data-set]");
+        for (var i = 0; i < b.length; i++) {
+            b[i].addEventListener("click", function () {
+                var l = this.getAttribute("data-set");
+                apply(l);
+                try { localStorage.setItem("lang", l); } catch (e) {}
+            });
+        }
+    });
+})();
+</script>
 </head>
 <body>
-
 <header>
     <div class="nav-container">
-        <a href="index.html" class="logo">
-            YPtun
-        </a>
+        <a href="index.html" class="logo">YPtun</a>
+        <div class="nav-right">
         <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="terms.html">Terms</a>
-            <a href="privacy.html" class="active">Privacy</a>
-            <a href="support.html">Support</a>
+            <a href="index.html"><span data-l="en">Home</span><span data-l="ru">Главная</span><span data-l="zh">首页</span><span data-l="fa">خانه</span></a>
+            <a href="terms.html"><span data-l="en">Terms</span><span data-l="ru">Условия</span><span data-l="zh">条款</span><span data-l="fa">شرایط</span></a>
+            <a href="privacy.html" class="active"><span data-l="en">Privacy</span><span data-l="ru">Конфиденциальность</span><span data-l="zh">隐私</span><span data-l="fa">حریم خصوصی</span></a>
+            <a href="support.html"><span data-l="en">Support</span><span data-l="ru">Поддержка</span><span data-l="zh">支持</span><span data-l="fa">پشتیبانی</span></a>
         </nav>
+        <div class="lang-switch"><button type="button" data-set="en">EN</button><button type="button" data-set="ru">RU</button><button type="button" data-set="zh">中文</button><button type="button" data-set="fa">فارسی</button></div>
+        </div>
     </div>
 </header>
-
 <main>
+<div data-l="en">
+
     <div class="doc-header">
         <h1>Privacy Policy</h1>
-        <div class="doc-meta">Last Updated: October 5, 2026 &bull; Version 1.0</div>
+        <div class="doc-meta">Last Updated: October 23, 2026 &bull; Version 2.0</div>
     </div>
 
     <section>
-        <p>This Privacy Policy outlines how <strong>YPtun</strong> ("we", "our", or "the Application") handles user privacy and information. We operate with a strict commitment to user privacy, data minimization, and transparent client-side software architecture.</p>
+        <p>This Privacy Policy explains what the <strong>YPtun</strong> software for Android, iOS, Windows and Linux (the "Software") stores on your device, what it sends over the network, and to whom. It is written to match how the Software actually behaves. It should be read together with the <a href="terms.html" style="color: var(--accent); text-decoration: none;">Terms of Use</a>.</p>
+        <p>"We", "us" and "the Developers" mean the individuals who maintain the Software and its public repository, together with its contributors.</p>
         <div class="callout">
-            <p><strong>Core Zero-Logs Commitment:</strong> YPtun does not collect, monitor, log, record, or share your browsing activity, network traffic destinations, DNS lookups, transmitted data payloads, or originating IP addresses. The Application operates strictly as a local, client-side network utility.</p>
+            <p><strong>Short version.</strong> The Software has no accounts, no advertising, no analytics or crash-reporting libraries, and no server run by the Developers. We do not receive your traffic, your servers, your settings or your device information. Your data stays on your device, except for the network requests described in section 3, which go to third parties that you choose or that the features you use depend on.</p>
         </div>
     </section>
 
     <section>
-        <h2>1. Information We Never Collect</h2>
-        <p>In full compliance with Apple App Store Review Guidelines (specifically Guideline 5.1 on Data Collection and Guideline 5.4 on VPN Applications), YPtun adheres to the following principles:</p>
+        <h2>1. What We Do Not Do</h2>
         <ul>
-            <li><strong>No Traffic Logs:</strong> We do not inspect, log, or store data packets, websites visited, or online services accessed through the Application.</li>
-            <li><strong>No Connection Timestamps:</strong> We do not log timestamps indicating when connections are established or disconnected.</li>
-            <li><strong>No IP Address Records:</strong> We never log your originating IP address or the destination IP addresses reached through tunnels.</li>
-            <li><strong>No DNS Query Recording:</strong> We do not record or retain your DNS queries.</li>
-            <li><strong>No User Account or Identity:</strong> YPtun does not require account registration. We do not collect names, email addresses, phone numbers, or passwords.</li>
-            <li><strong>No Advertising or Behavioral Tracking:</strong> The Application contains no third-party advertising frameworks, analytics SDKs, device fingerprinting, or tracking mechanisms.</li>
+            <li>We operate no backend that receives data from the Software, and no VPN or proxy servers.</li>
+            <li>We do not inspect, record or store your traffic, the sites you visit, your DNS queries or your connection times. The Software does not send such information to us.</li>
+            <li>The Software requires no account and does not ask for your name, email address, phone number or password.</li>
+            <li>The Software contains no advertising frameworks, no analytics or telemetry SDKs, no crash-reporting services and no device fingerprinting for marketing.</li>
+            <li>We do not sell, rent or trade personal data, and we do not receive any from the Software to share.</li>
+        </ul>
+        <p>These statements describe the Software and its Developers only. We cannot speak for the third parties in section 3, who see what any server sees when you connect to it.</p>
+    </section>
+
+    <section>
+        <h2>2. Data Stored on Your Device</h2>
+        <p>The following is stored locally, in the Software's private storage on your device (on iOS, in the app sandbox, the Keychain and the app group container):</p>
+        <ul>
+            <li><strong>Configurations:</strong> servers, subscription links, keys and credentials, routing rules and settings that you or your provider add.</li>
+            <li><strong>Subscription data:</strong> metadata a provider supplies, such as a title, traffic and expiry information, announcements and a logo.</li>
+            <li><strong>Identifiers:</strong> a device identifier (HWID), which on Android is derived from a platform identifier where available and otherwise generated randomly, and a random per-install application ID. They are used only as described in section 3 and can be turned off in Settings, Privacy.</li>
+            <li><strong>Diagnostics:</strong> an in-app journal and log files that may contain events, server addresses and error messages. They stay on your device until you clear them or uninstall the Software, and are shared only if you export or send them yourself. Energy-saver mode reduces journal capture.</li>
+            <li><strong>Measurements:</strong> latency (ping) results, and, if you turn it on, the saved latest successful results.</li>
+        </ul>
+        <p>Some features need local access that is not sent anywhere by the Software: the camera (to scan QR codes, processed on the device), the list of installed applications (for per-application routing), and notification, battery and installation permissions that you grant on request.</p>
+    </section>
+
+    <section>
+        <h2>3. Network Requests the Software Makes</h2>
+        <p>The Software must use the network to work. Each recipient below is a third party that sees at least your IP address and the usual details of a web request. We do not receive any of this.</p>
+        <ul>
+            <li><strong>Servers and subscriptions you add.</strong> Your traffic goes to the servers in your configurations, and the Software downloads and refreshes the subscription links you add. Their operators can see your IP address, your traffic according to their setup, and the request headers. When a subscription request is made, the Software sends a User-Agent and, unless you turn it off in Settings, Privacy, the headers <code>x-hwid</code>, <code>x-app-id</code>, <code>x-device-os</code>, <code>x-ver-os</code>, <code>x-device-model</code> and <code>x-app-version</code>. Panels use them for device limits. With these turned off, a panel may refuse the subscription.</li>
+            <li><strong>Provider report (Happ-compatible ProviderID).</strong> If a subscription carries a <code>providerid</code> header, the Software sends a request to <code>check.happ-proxy.com</code> once a day with the provider ID, the device identifier, the application ID, the OS and its version, the device model and the application version. This is on by default and can be turned off in Settings, Privacy. When off, the request is not sent. The service is run by a third party.</li>
+            <li><strong>Update checks.</strong> The Software asks the GitHub API for the latest release. This request does not include your device identifier. If you download an update, you download it from GitHub.</li>
+            <li><strong>Routing rule data.</strong> Geo-IP, geo-site, rule-set and ASN lists are downloaded from public GitHub-hosted repositories, which see your IP address.</li>
+            <li><strong>Public free-server lists.</strong> If you use the free-servers feature, the Software downloads lists published by independent third parties, then tests the listed servers by connecting to them. The operators of those servers can see your IP address and the test requests. Such servers are unverified.</li>
+            <li><strong>Cloudflare WARP.</strong> If you use a WARP feature (for example the Telegram proxy), the Software registers a WARP account with Cloudflare. When the direct request fails, it may use fallback mirrors hosted on third-party platforms to obtain a configuration. These recipients see your IP address.</li>
+            <li><strong>Connectivity and address checks.</strong> Latency and connectivity tests use a test address you can change (by default a Google-hosted <code>generate_204</code> address). Some versions also query public IP-lookup services such as <code>api.ipify.org</code>, <code>icanhazip.com</code>, <code>ifconfig.me</code> and <code>ipinfo.io</code> to show or verify your external address. The «Session» window (opened by you) additionally queries <code>api6.ipify.org</code> and <code>ipwho.is</code> for the address owner and location, and its speed test downloads and uploads test data via <code>speed.cloudflare.com</code>; none of this runs in the background. These services see the address that makes the request.</li>
+            <li><strong>DNS.</strong> Name lookups go to the resolvers set in your configuration or settings, and these operators see the queries according to their policies.</li>
+            <li><strong>Connection methods you choose.</strong> Some engines carry traffic through third-party platforms, for example video-call, document or messaging services. If you select one, that platform receives the traffic and handles it under its own terms.</li>
+            <li><strong>Server installation.</strong> If you use the built-in server installer, the Software connects over SSH to the server you specify, using the details you enter. They are used for that connection and are not sent to us.</li>
+            <li><strong>Links you open.</strong> Links to websites, social networks or donation pages open in your browser or another app, under their own policies.</li>
         </ul>
     </section>
 
     <section>
-        <h2>2. Data Stored Locally on Your Device</h2>
-        <p>All data necessary for the Application to function is stored strictly within sandboxed local device storage:</p>
+        <h2>4. Third Parties</h2>
+        <p>Every recipient in section 3 is independent of us. They decide what they log and how long they keep it, and we do not control, audit or answer for them. Their own privacy policies apply. Connect only to servers and use only services you trust. We do not share your information with advertisers or authorities because we do not hold it. This does not limit what a law may require third parties to do.</p>
+    </section>
+
+    <section>
+        <h2>5. Roles, Legal Bases and Your Rights</h2>
+        <p>Because the Developers receive no personal data from the Software, we are not the controller or processor of the data that stays on your device or that is sent to the third parties in section 3. Those third parties act on their own behalf. If a law nevertheless treats part of the on-device processing as ours, it is limited to what is described here and is carried out in the legitimate interest of providing the Software you asked to run, or on your consent when you turn a feature on.</p>
         <ul>
-            <li><strong>Connection Configurations:</strong> Server addresses, port numbers, cryptographic keys, and routing rules imported by the user are stored locally in the secure iOS Keychain and sandboxed application storage (App Group container).</li>
-            <li><strong>Session Diagnostics:</strong> Latency measurements (ping) and packet transfer counters displayed in the user interface or Live Activity are computed transiently in memory during active sessions and are discarded when closed.</li>
+            <li><strong>Access, export and erasure:</strong> you hold your data on your device. You can export configurations in the Software, delete profiles and logs, or remove everything by uninstalling it.</li>
+            <li><strong>Choice:</strong> you can switch off the provider report and the sending of device information in Settings, Privacy, and you can avoid the optional features above.</li>
+            <li><strong>Requests to third parties:</strong> to access or delete data held by a server operator, panel, WARP provider or other service, contact that party directly.</li>
+            <li><strong>Our contact data:</strong> if you email us, we process your address and message only to reply, and keep them as long as needed for that purpose and for legal reasons.</li>
+            <li>Depending on where you live (for example the EEA, the UK, California, Russia, Brazil and other countries), you may have additional rights, including to complain to your data protection authority. Nothing in this Policy limits rights that cannot be waived by law.</li>
         </ul>
-        <p>This data is never transmitted to, stored on, or synchronized with any server owned or controlled by YPtun.</p>
+        <p>We do not sell or share personal information as those terms are used in California law, and we do not use sensitive personal information for profiling.</p>
     </section>
 
     <section>
-        <h2>3. Apple Network Extension Framework</h2>
-        <p>To establish secure network routing on iOS, YPtun utilizes Apple's official <code>NetworkExtension</code> framework (specifically <code>NEPacketTunnelProvider</code>). This system entitlement enables the Application to create a virtual network interface on the device and direct packets through user-selected protocols.</p>
-        <p>Packet processing is handled locally by the tunnel provider extension according to the user's active routing configuration.</p>
+        <h2>6. Security</h2>
+        <p>Configuration data is kept in the Software's private storage (on iOS also in the Keychain), and traffic to servers uses the protocols and encryption you select. No software or network is completely secure. We do not guarantee that your data cannot be accessed by someone with access to your device, to a server you use, or to a network you use.</p>
     </section>
 
     <section>
-        <h2>4. User-Provided Configurations & Third-Party Endpoints</h2>
-        <p>YPtun functions as an open routing client. When you import and connect to a server or subscription provided by a third-party service provider or private server, your encrypted network traffic routes through that endpoint.</p>
-        <p>The handling of traffic passing through external endpoints is governed exclusively by the privacy policies and infrastructure of those independent server operators. We advise users to connect only through verified, trustworthy network servers.</p>
+        <h2>7. Retention and International Transfers</h2>
+        <p>Data on your device remains until you delete it or uninstall the Software. We do not retain data from the Software. Your requests go to the servers and services you use wherever they are located, which can be in other countries, and the Developers do not control those transfers.</p>
     </section>
 
     <section>
-        <h2>5. Third-Party Data Sharing</h2>
-        <p>Because we do not collect personal data, account information, or network telemetry, we do not sell, rent, monetize, trade, or share any user information with third parties, advertisers, or government entities.</p>
+        <h2>8. Children</h2>
+        <p>The Software is not directed at children. We do not knowingly collect personal data from anyone, including children under 13 (or under 16 where that is the local age of consent). Parents or guardians who believe a child has used the Software to share data with a third party should contact that third party.</p>
     </section>
 
     <section>
-        <h2>6. Compliance with International Privacy Laws (GDPR & CCPA)</h2>
-        <p>Under the European General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA):</p>
+        <h2>9. Apple Platforms</h2>
+        <p>On iOS the Software uses Apple's NetworkExtension framework (a packet tunnel provider) to create a virtual network interface and route packets on your device according to your configuration. This processing takes place locally on the device.</p>
+    </section>
+
+    <section>
+        <h2>10. Changes</h2>
+        <p>We may update this Policy when the Software changes or the law requires it. The new version is published on this page with an updated date. Continued use means you accept the change.</p>
+    </section>
+
+    <section>
+        <h2>11. Contact</h2>
+        <p>Questions about this Policy: <a href="mailto:yptunn@gmail.com" style="color: var(--accent); text-decoration: none;">yptunn@gmail.com</a></p>
+    </section>
+</div>
+<div data-l="ru">
+    <div class="doc-header">
+        <h1>Политика конфиденциальности</h1>
+        <div class="doc-meta">Обновлено: 23 октября 2026 &bull; Версия 2.0</div>
+    </div>
+
+    <section>
+        <p>Настоящая Политика конфиденциальности объясняет, что программное обеспечение <strong>YPtun</strong> для Android, iOS, Windows и Linux («Программа») хранит на вашем устройстве, что отправляет по сети и кому. Она написана в соответствии с тем, как Программа работает на самом деле. Читайте её вместе с <a href="terms.html" style="color: var(--accent); text-decoration: none;">Условиями использования</a>.</p>
+        <p>«Мы», «нас» и «Разработчики» означают физических лиц, которые поддерживают Программу и её публичный репозиторий, а также её участников-контрибьюторов.</p>
+        <div class="callout">
+            <p><strong>Коротко.</strong> В Программе нет учётных записей, рекламы, библиотек аналитики или отчётов о сбоях и нет сервера, который эксплуатируют Разработчики. Мы не получаем ваш трафик, ваши серверы, ваши настройки или данные вашего устройства. Ваши данные остаются на вашем устройстве, за исключением сетевых запросов, описанных в разделе 3, которые идут к третьим лицам, выбранным вами или необходимым для используемых вами функций.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>1. Чего мы не делаем</h2>
         <ul>
-            <li><strong>Right of Access & Portability:</strong> Since we store no personal data on servers, any configurations you create reside solely on your device and can be exported directly through the app interface.</li>
-            <li><strong>Right to Erasure:</strong> You can completely erase all locally stored data, configurations, and keys at any time by deleting profiles within the app or uninstalling the Application.</li>
+            <li>Мы не эксплуатируем серверную часть, которая получала бы данные от Программы, и никакие VPN- или прокси-серверы.</li>
+            <li>Мы не просматриваем, не записываем и не храним ваш трафик, посещаемые вами сайты, ваши DNS-запросы или время ваших подключений. Программа не отправляет нам такую информацию.</li>
+            <li>Для работы Программы не нужна учётная запись, она не запрашивает ваше имя, адрес электронной почты, телефон или пароль.</li>
+            <li>В Программе нет рекламных фреймворков, SDK аналитики или телеметрии, сервисов отчётов о сбоях и снятия цифровых отпечатков устройства в маркетинговых целях.</li>
+            <li>Мы не продаём, не сдаём в аренду и не обмениваем персональные данные и не получаем их от Программы, чтобы ими делиться.</li>
+        </ul>
+        <p>Эти утверждения описывают только Программу и её Разработчиков. Мы не можем говорить за третьих лиц из раздела 3, которые видят то, что видит любой сервер, к которому вы подключаетесь.</p>
+    </section>
+
+    <section>
+        <h2>2. Данные, хранящиеся на вашем устройстве</h2>
+        <p>Следующее хранится локально, в закрытом хранилище Программы на вашем устройстве (на iOS - в песочнице приложения, Keychain и контейнере группы приложений):</p>
+        <ul>
+            <li><strong>Конфигурации:</strong> серверы, ссылки на подписки, ключи и учётные данные, правила маршрутизации и настройки, которые добавляете вы или ваш провайдер.</li>
+            <li><strong>Данные подписок:</strong> метаданные, которые предоставляет провайдер, например название, сведения о трафике и сроке действия, объявления и логотип.</li>
+            <li><strong>Идентификаторы:</strong> идентификатор устройства (HWID), который на Android формируется из платформенного идентификатора, если он доступен, а иначе генерируется случайно, и случайный идентификатор установки приложения. Они используются только так, как описано в разделе 3, и могут быть отключены в «Настройки → Приватность».</li>
+            <li><strong>Диагностика:</strong> журнал внутри приложения и файлы логов, которые могут содержать события, адреса серверов и сообщения об ошибках. Они остаются на вашем устройстве, пока вы не очистите их или не удалите Программу, и передаются только если вы сами их экспортируете или отправите. Режим энергосбережения уменьшает захват журнала.</li>
+            <li><strong>Измерения:</strong> результаты замеров задержки (пинга) и, если вы включите, сохранённые последние успешные результаты.</li>
+        </ul>
+        <p>Некоторым функциям нужен локальный доступ, который Программа никуда не отправляет: камера (для сканирования QR-кодов, обработка на устройстве), список установленных приложений (для маршрутизации по приложениям), а также разрешения на уведомления, батарею и установку, которые вы выдаёте по запросу.</p>
+    </section>
+
+    <section>
+        <h2>3. Сетевые запросы, которые делает Программа</h2>
+        <p>Для работы Программе необходима сеть. Каждый получатель ниже является третьей стороной, которая видит как минимум ваш IP-адрес и обычные сведения веб-запроса. Мы ничего из этого не получаем.</p>
+        <ul>
+            <li><strong>Серверы и подписки, которые вы добавляете.</strong> Ваш трафик идёт на серверы из ваших конфигураций, а Программа скачивает и обновляет ссылки на подписки, которые вы добавляете. Их операторы могут видеть ваш IP-адрес, ваш трафик в зависимости от их настроек и заголовки запроса. При запросе подписки Программа отправляет User-Agent и, если вы не отключили это в «Настройки → Приватность», заголовки <code>x-hwid</code>, <code>x-app-id</code>, <code>x-device-os</code>, <code>x-ver-os</code>, <code>x-device-model</code> и <code>x-app-version</code>. Панели используют их для лимита устройств. Если отключить их, панель может отказать в подписке.</li>
+            <li><strong>Отчёт провайдеру (Happ-совместимый ProviderID).</strong> Если подписка содержит заголовок <code>providerid</code>, Программа раз в сутки отправляет запрос на <code>check.happ-proxy.com</code> с идентификатором провайдера, идентификатором устройства, идентификатором приложения, ОС и её версией, моделью устройства и версией приложения. Это включено по умолчанию и отключается в «Настройки → Приватность». При отключении запрос не отправляется. Этот сервис эксплуатирует третья сторона.</li>
+            <li><strong>Проверка обновлений.</strong> Программа запрашивает у GitHub API последний релиз. Этот запрос не содержит идентификатор вашего устройства. Если вы скачиваете обновление, вы скачиваете его с GitHub.</li>
+            <li><strong>Данные правил маршрутизации.</strong> Списки geo-IP, geo-site, наборы правил и списки ASN скачиваются из публичных репозиториев на GitHub, которые видят ваш IP-адрес.</li>
+            <li><strong>Публичные списки бесплатных серверов.</strong> Если вы используете функцию бесплатных серверов, Программа скачивает списки, опубликованные независимыми третьими лицами, а затем проверяет указанные в них серверы, подключаясь к ним. Операторы этих серверов могут видеть ваш IP-адрес и проверочные запросы. Такие серверы не проверены.</li>
+            <li><strong>Cloudflare WARP.</strong> Если вы используете функцию WARP (например, прокси для Telegram), Программа регистрирует учётную запись WARP в Cloudflare. Если прямой запрос не проходит, она может использовать запасные зеркала на сторонних платформах для получения конфигурации. Эти получатели видят ваш IP-адрес.</li>
+            <li><strong>Проверки связи и адреса.</strong> Тесты задержки и связи используют тестовый адрес, который вы можете изменить (по умолчанию адрес <code>generate_204</code>, размещённый у Google). Некоторые версии также обращаются к публичным сервисам определения IP, таким как <code>api.ipify.org</code>, <code>icanhazip.com</code>, <code>ifconfig.me</code> и <code>ipinfo.io</code>, чтобы показать или проверить ваш внешний адрес. Окно «Сессия» (его открываете вы) дополнительно обращается к <code>api6.ipify.org</code> и <code>ipwho.is</code> за владельцем адреса и местоположением, а его тест скорости скачивает и отправляет тестовые данные через <code>speed.cloudflare.com</code>; в фоне ничего из этого не запускается. Эти сервисы видят адрес, с которого сделан запрос.</li>
+            <li><strong>DNS.</strong> DNS-запросы идут на резолверы, указанные в вашей конфигурации или настройках, и операторы этих резолверов видят запросы в соответствии со своей политикой.</li>
+            <li><strong>Выбранные вами способы подключения.</strong> Некоторые движки передают трафик через сторонние платформы, например сервисы видеозвонков, документов или обмена сообщениями. Если вы выбираете такой движок, эта платформа получает трафик и обрабатывает его на своих условиях.</li>
+            <li><strong>Установка сервера.</strong> Если вы используете встроенный установщик сервера, Программа подключается по SSH к указанному вами серверу с введёнными вами данными. Они используются для этого подключения и нам не отправляются.</li>
+            <li><strong>Ссылки, которые вы открываете.</strong> Ссылки на сайты, социальные сети или страницы пожертвований открываются в вашем браузере или другом приложении и подпадают под их собственные политики.</li>
         </ul>
     </section>
 
     <section>
-        <h2>7. Children's Privacy</h2>
-        <p>YPtun does not knowingly collect or solicit personal data from children under the age of 13 (or under the age of 16 in certain jurisdictions). As the Application operates without user registration or data collection, it complies with the Children's Online Privacy Protection Act (COPPA).</p>
+        <h2>4. Третьи лица</h2>
+        <p>Каждый получатель из раздела 3 независим от нас. Они сами решают, что записывать и как долго хранить, а мы не контролируем, не проверяем и не отвечаем за них. К ним применяются их собственные политики конфиденциальности. Подключайтесь только к серверам и пользуйтесь только сервисами, которым вы доверяете. Мы не передаём вашу информацию рекламодателям или органам власти, потому что она у нас отсутствует. Это не ограничивает то, что закон может требовать от третьих лиц.</p>
     </section>
 
     <section>
-        <h2>8. Updates to This Policy</h2>
-        <p>We may periodically update this Privacy Policy to reflect software changes or evolving regulatory standards. Any revisions will be published on this page with an updated "Last Updated" date.</p>
+        <h2>5. Роли, правовые основания и ваши права</h2>
+        <p>Поскольку Разработчики не получают от Программы персональные данные, мы не являемся оператором (контролёром) или обработчиком данных, которые остаются на вашем устройстве или отправляются третьим лицам из раздела 3. Эти третьи лица действуют от своего имени. Если закон всё же относит часть обработки на устройстве к нам, она ограничивается описанным здесь и осуществляется в законных интересах предоставления Программы, которую вы запустили, либо на основании вашего согласия, когда вы включаете функцию.</p>
+        <ul>
+            <li><strong>Доступ, экспорт и удаление:</strong> ваши данные находятся на вашем устройстве. Вы можете экспортировать конфигурации в Программе, удалять профили и журналы либо удалить всё, удалив Программу.</li>
+            <li><strong>Выбор:</strong> вы можете отключить отчёт провайдеру и отправку сведений об устройстве в «Настройки → Приватность» и не пользоваться необязательными функциями, описанными выше.</li>
+            <li><strong>Запросы к третьим лицам:</strong> чтобы получить доступ к данным, которые хранит оператор сервера, панель, поставщик WARP или иной сервис, или удалить их, обращайтесь непосредственно к этому лицу.</li>
+            <li><strong>Наши контактные данные:</strong> если вы пишете нам на почту, мы обрабатываем ваш адрес и сообщение только для ответа и храним их столько, сколько необходимо для этой цели и по требованиям закона.</li>
+            <li>В зависимости от места вашего проживания (например, ЕЭЗ, Великобритания, Калифорния, Россия, Бразилия и другие страны) у вас могут быть дополнительные права, в том числе право подать жалобу в орган по защите данных. Ничто в настоящей Политике не ограничивает права, от которых нельзя отказаться по закону.</li>
+        </ul>
+        <p>Мы не продаём персональную информацию и не передаём её в понимании калифорнийского права, а также не используем чувствительную персональную информацию для профилирования.</p>
     </section>
 
     <section>
-        <h2>9. Contact Information</h2>
-        <p>If you have questions, feedback, or require assistance regarding this Privacy Policy, please contact us at:</p>
-        <p><strong>Email:</strong> <a href="mailto:yptunn@gmail.com" style="color: var(--accent); text-decoration: none;">yptunn@gmail.com</a></p>
+        <h2>6. Безопасность</h2>
+        <p>Данные конфигурации хранятся в закрытом хранилище Программы (на iOS также в Keychain), а трафик к серверам использует выбранные вами протоколы и шифрование. Ни одна программа и ни одна сеть не бывают полностью безопасными. Мы не гарантируем, что к вашим данным не получит доступ тот, у кого есть доступ к вашему устройству, к используемому вами серверу или к используемой вами сети.</p>
     </section>
+
+    <section>
+        <h2>7. Хранение и международная передача</h2>
+        <p>Данные на вашем устройстве хранятся, пока вы их не удалите или не удалите Программу. Мы не храним данные из Программы. Ваши запросы идут на серверы и сервисы, которыми вы пользуетесь, где бы они ни находились, в том числе в других странах, и Разработчики не контролируют такую передачу.</p>
+    </section>
+
+    <section>
+        <h2>8. Дети</h2>
+        <p>Программа не предназначена для детей. Мы сознательно не собираем персональные данные ни у кого, включая детей младше 13 лет (или младше 16 лет, если это возраст согласия по местному праву). Родителям или опекунам, которые полагают, что ребёнок использовал Программу для передачи данных третьему лицу, следует обратиться к этому третьему лицу.</p>
+    </section>
+
+    <section>
+        <h2>9. Платформы Apple</h2>
+        <p>На iOS Программа использует фреймворк Apple NetworkExtension (провайдер пакетного туннеля) для создания виртуального сетевого интерфейса и маршрутизации пакетов на вашем устройстве в соответствии с вашей конфигурацией. Эта обработка выполняется локально на устройстве.</p>
+    </section>
+
+    <section>
+        <h2>10. Изменения</h2>
+        <p>Мы можем обновлять настоящую Политику при изменении Программы или по требованию закона. Новая версия публикуется на этой странице с обновлённой датой. Продолжение использования означает ваше согласие с изменением.</p>
+    </section>
+
+    <section>
+        <h2>11. Контакты</h2>
+        <p>Вопросы по настоящей Политике: <a href="mailto:yptunn@gmail.com" style="color: var(--accent); text-decoration: none;">yptunn@gmail.com</a></p>
+    </section>
+</div>
+<div data-l="zh">
+    <div class="doc-header">
+        <h1>隐私政策</h1>
+        <div class="doc-meta">最后更新：2026 年 10 月 23 日 &bull; 版本 2.0</div>
+    </div>
+
+    <section>
+        <p>本隐私政策说明适用于 Android、iOS、Windows 和 Linux 的 <strong>YPtun</strong> 软件（“本软件”）在您的设备上存储什么、通过网络发送什么，以及发送给谁。本政策依据本软件的实际行为撰写，请与<a href="terms.html" style="color: var(--accent); text-decoration: none;">使用条款</a>一并阅读。</p>
+        <p>“我们”和“开发者”是指维护本软件及其公开代码仓库的个人，以及其贡献者。</p>
+        <div class="callout">
+            <p><strong>简要说明。</strong>本软件没有账户、没有广告、没有分析或崩溃报告库，也没有由开发者运营的服务器。我们不会收到您的流量、您的服务器、您的设置或您的设备信息。您的数据保留在您的设备上，但第 3 条所述的网络请求除外，这些请求发往您所选择的第三方，或您所用功能所依赖的第三方。</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>1. 我们不做的事</h2>
+        <ul>
+            <li>我们不运营接收本软件数据的后端，也不运营任何 VPN 或代理服务器。</li>
+            <li>我们不检查、记录或存储您的流量、您访问的网站、您的 DNS 查询或您的连接时间。本软件不会向我们发送此类信息。</li>
+            <li>本软件无需账户，也不会要求您提供姓名、电子邮件地址、电话号码或密码。</li>
+            <li>本软件不含广告框架、分析或遥测 SDK、崩溃报告服务，也不为营销目的进行设备指纹识别。</li>
+            <li>我们不出售、出租或交易个人数据，也不会从本软件接收任何可供分享的个人数据。</li>
+        </ul>
+        <p>以上陈述仅描述本软件及其开发者。对于第 3 条所述的第三方，我们无法代为说明，它们会看到任何服务器在您连接时能看到的内容。</p>
+    </section>
+
+    <section>
+        <h2>2. 存储在您设备上的数据</h2>
+        <p>以下内容存储在本地，位于本软件在您设备上的私有存储中（在 iOS 上为应用沙盒、钥匙串和应用组容器）：</p>
+        <ul>
+            <li><strong>配置：</strong>您或您的提供方添加的服务器、订阅链接、密钥和凭据、路由规则及设置。</li>
+            <li><strong>订阅数据：</strong>提供方提供的元数据，例如标题、流量与到期信息、公告和徽标。</li>
+            <li><strong>标识符：</strong>设备标识符（HWID），在 Android 上若有平台标识符则由其派生，否则随机生成；以及随机的每次安装的应用 ID。它们仅按第 3 条所述使用，并可在“设置 → 隐私”中关闭。</li>
+            <li><strong>诊断信息：</strong>应用内日志和日志文件，可能包含事件、服务器地址和错误消息。它们保留在您的设备上，直到您清除或卸载本软件，只有在您自行导出或发送时才会被分享。节能模式会减少日志捕获。</li>
+            <li><strong>测量数据：</strong>延迟（ping）结果，以及在您开启后保存的最近成功结果。</li>
+        </ul>
+        <p>部分功能需要本地访问权限，本软件不会将其发送到任何地方：摄像头（用于扫描二维码，在设备上处理）、已安装应用列表（用于按应用路由），以及您在被请求时授予的通知、电池和安装权限。</p>
+    </section>
+
+    <section>
+        <h2>3. 本软件发出的网络请求</h2>
+        <p>本软件需要使用网络才能工作。下列每个接收方都是第三方，至少能看到您的 IP 地址和网络请求的常规信息。我们不会收到其中任何内容。</p>
+        <ul>
+            <li><strong>您添加的服务器和订阅。</strong>您的流量发往您配置中的服务器，本软件会下载并刷新您添加的订阅链接。其运营者可以看到您的 IP 地址、依其设置可见的您的流量，以及请求头。发出订阅请求时，本软件会发送 User-Agent，并且除非您在“设置 → 隐私”中关闭，还会发送 <code>x-hwid</code>、<code>x-app-id</code>、<code>x-device-os</code>、<code>x-ver-os</code>、<code>x-device-model</code> 和 <code>x-app-version</code> 请求头。面板用它们来实现设备数量限制。关闭后，面板可能拒绝提供订阅。</li>
+            <li><strong>提供方报告（兼容 Happ 的 ProviderID）。</strong>如果订阅带有 <code>providerid</code> 请求头，本软件每天向 <code>check.happ-proxy.com</code> 发送一次请求，内容包括提供方 ID、设备标识符、应用 ID、操作系统及其版本、设备型号和应用版本。该功能默认开启，可在“设置 → 隐私”中关闭；关闭后不会发送该请求。此服务由第三方运营。</li>
+            <li><strong>更新检查。</strong>本软件向 GitHub API 查询最新版本。该请求不包含您的设备标识符。如果您下载更新，则从 GitHub 下载。</li>
+            <li><strong>路由规则数据。</strong>Geo-IP、geo-site、规则集和 ASN 列表从托管在 GitHub 上的公共仓库下载，这些仓库能看到您的 IP 地址。</li>
+            <li><strong>公共免费服务器列表。</strong>如果您使用免费服务器功能，本软件会下载由独立第三方发布的列表，然后通过连接来测试列出的服务器。这些服务器的运营者可以看到您的 IP 地址和测试请求。此类服务器未经验证。</li>
+            <li><strong>Cloudflare WARP。</strong>如果您使用 WARP 功能（例如 Telegram 代理），本软件会向 Cloudflare 注册 WARP 账户。当直接请求失败时，可能使用托管在第三方平台上的备用镜像来获取配置。这些接收方能看到您的 IP 地址。</li>
+            <li><strong>连通性与地址检测。</strong>延迟和连通性测试使用您可修改的测试地址（默认是托管在 Google 的 <code>generate_204</code> 地址）。部分版本还会查询公共 IP 查询服务，如 <code>api.ipify.org</code>、<code>icanhazip.com</code>、<code>ifconfig.me</code> 和 <code>ipinfo.io</code>，以显示或验证您的外部地址。由您打开的“会话”窗口还会查询 <code>api6.ipify.org</code> 和 <code>ipwho.is</code> 以获取地址归属和位置，其速度测试通过 <code>speed.cloudflare.com</code> 下载和上传测试数据；这些都不会在后台运行。这些服务能看到发出请求的地址。</li>
+            <li><strong>DNS。</strong>域名解析发往您的配置或设置中指定的解析器，这些运营者会依其政策看到查询内容。</li>
+            <li><strong>您选择的连接方式。</strong>部分引擎通过第三方平台传输流量，例如视频通话、文档或消息服务。如果您选择了其中之一，该平台会收到流量并依其自身条款处理。</li>
+            <li><strong>服务器安装。</strong>如果您使用内置的服务器安装器，本软件会使用您输入的信息通过 SSH 连接到您指定的服务器。这些信息仅用于该连接，不会发送给我们。</li>
+            <li><strong>您打开的链接。</strong>指向网站、社交网络或捐赠页面的链接会在您的浏览器或其他应用中打开，适用其各自的政策。</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>4. 第三方</h2>
+        <p>第 3 条中的每一个接收方都独立于我们。它们自行决定记录什么、保留多久，我们不控制、审计它们，也不对其负责。适用它们各自的隐私政策。请仅连接并使用您信任的服务器和服务。我们不会向广告商或政府机关分享您的信息，因为我们并不持有这些信息。这不限制法律可能要求第三方所做的事情。</p>
+    </section>
+
+    <section>
+        <h2>5. 角色、法律依据与您的权利</h2>
+        <p>由于开发者不会从本软件收到个人数据，我们不是保留在您设备上的数据，或发送给第 3 条所述第三方的数据的控制者或处理者。这些第三方为其自身行事。如果法律仍将设备上处理的一部分视为我们所为，则其范围限于此处所述，并基于为您提供您所运行的软件的合法利益，或基于您开启某项功能时给予的同意。</p>
+        <ul>
+            <li><strong>访问、导出与删除：</strong>您的数据在您的设备上。您可以在本软件中导出配置、删除配置和日志，或通过卸载本软件删除全部数据。</li>
+            <li><strong>选择权：</strong>您可以在“设置 → 隐私”中关闭提供方报告和设备信息发送，也可以不使用上述可选功能。</li>
+            <li><strong>向第三方提出请求：</strong>如需访问或删除服务器运营者、面板、WARP 提供方或其他服务所持有的数据，请直接联系该方。</li>
+            <li><strong>我们的联系数据：</strong>如果您给我们发邮件，我们仅为答复而处理您的地址和邮件内容，并在为此目的及依法所需的期限内保留。</li>
+            <li>根据您居住的地方（例如欧洲经济区、英国、加利福尼亚州、俄罗斯、巴西及其他国家），您可能享有额外的权利，包括向数据保护机构投诉的权利。本政策中的任何内容均不限制依法无法放弃的权利。</li>
+        </ul>
+        <p>我们不按加利福尼亚州法律所使用的含义出售或共享个人信息，也不将敏感个人信息用于画像。</p>
+    </section>
+
+    <section>
+        <h2>6. 安全</h2>
+        <p>配置数据保存在本软件的私有存储中（在 iOS 上还包括钥匙串），与服务器之间的流量使用您所选的协议和加密。没有任何软件或网络是完全安全的。我们不保证有权访问您的设备、您所用服务器或您所用网络的人无法访问您的数据。</p>
+    </section>
+
+    <section>
+        <h2>7. 保留与跨境传输</h2>
+        <p>您设备上的数据会保留到您删除它或卸载本软件为止。我们不保留来自本软件的数据。您的请求会发往您所使用的服务器和服务，无论其位于何处，包括其他国家，开发者无法控制此类传输。</p>
+    </section>
+
+    <section>
+        <h2>8. 儿童</h2>
+        <p>本软件不面向儿童。我们不会有意收集任何人的个人数据，包括 13 岁以下（或在当地同意年龄为 16 岁的地方，16 岁以下）的儿童。如果家长或监护人认为孩子使用本软件向第三方分享了数据，应联系该第三方。</p>
+    </section>
+
+    <section>
+        <h2>9. Apple 平台</h2>
+        <p>在 iOS 上，本软件使用 Apple 的 NetworkExtension 框架（数据包隧道提供程序）创建虚拟网络接口，并按您的配置在您的设备上路由数据包。该处理在设备本地进行。</p>
+    </section>
+
+    <section>
+        <h2>10. 变更</h2>
+        <p>当本软件变更或法律要求时，我们可能更新本政策。新版本将在本页发布并更新日期。继续使用即表示您接受该变更。</p>
+    </section>
+
+    <section>
+        <h2>11. 联系方式</h2>
+        <p>有关本政策的问题：<a href="mailto:yptunn@gmail.com" style="color: var(--accent); text-decoration: none;">yptunn@gmail.com</a></p>
+    </section>
+</div>
+<div data-l="fa">
+    <div class="doc-header">
+        <h1>سیاست حریم خصوصی</h1>
+        <div class="doc-meta">آخرین به‌روزرسانی: ۲۳ اکتبر ۲۰۲۶ &bull; نسخه ۲٫۰</div>
+    </div>
+
+    <section>
+        <p>این سیاست حریم خصوصی توضیح می‌دهد که نرم‌افزار <strong>YPtun</strong> برای اندروید، iOS، ویندوز و لینوکس («نرم‌افزار») چه چیزی را روی دستگاه شما ذخیره می‌کند، چه چیزی را از طریق شبکه می‌فرستد و به چه کسی. این متن مطابق رفتار واقعی نرم‌افزار نوشته شده و باید همراه <a href="terms.html" style="color: var(--accent); text-decoration: none;">شرایط استفاده</a> خوانده شود.</p>
+        <p>«ما» و «توسعه‌دهندگان» به افرادی گفته می‌شود که نرم‌افزار و مخزن عمومی آن را نگهداری می‌کنند، به‌همراه مشارکت‌کنندگان آن.</p>
+        <div class="callout">
+            <p><strong>خلاصه.</strong> نرم‌افزار حساب کاربری، تبلیغات، کتابخانه‌ی تحلیل یا گزارش خرابی و سروری که توسعه‌دهندگان اداره کنند ندارد. ما ترافیک، سرورها، تنظیمات یا اطلاعات دستگاه شما را دریافت نمی‌کنیم. داده‌های شما روی دستگاه شما می‌ماند، به‌جز درخواست‌های شبکه‌ای که در بند ۳ آمده و به اشخاص ثالثی می‌رود که خودتان انتخاب می‌کنید یا قابلیت‌هایی که استفاده می‌کنید به آن‌ها وابسته است.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>۱. کارهایی که ما نمی‌کنیم</h2>
+        <ul>
+            <li>ما هیچ سرور پشتیبانی که داده‌ای از نرم‌افزار دریافت کند و هیچ سرور وی‌پی‌ان یا پراکسی اداره نمی‌کنیم.</li>
+            <li>ما ترافیک شما، سایت‌هایی که می‌بینید، درخواست‌های DNS یا زمان اتصال‌های شما را بررسی، ثبت یا ذخیره نمی‌کنیم. نرم‌افزار چنین اطلاعاتی را برای ما نمی‌فرستد.</li>
+            <li>نرم‌افزار به حساب کاربری نیاز ندارد و نام، نشانی ایمیل، شماره‌ی تلفن یا گذرواژه‌ی شما را نمی‌خواهد.</li>
+            <li>نرم‌افزار چارچوب تبلیغاتی، SDK تحلیل یا تله‌متری، سرویس گزارش خرابی یا ردگیری اثر انگشت دستگاه برای بازاریابی ندارد.</li>
+            <li>ما داده‌ی شخصی را نمی‌فروشیم، اجاره نمی‌دهیم و معامله نمی‌کنیم و از نرم‌افزار هم داده‌ای برای به اشتراک گذاشتن دریافت نمی‌کنیم.</li>
+        </ul>
+        <p>این گزاره‌ها فقط نرم‌افزار و توسعه‌دهندگان آن را توصیف می‌کنند. ما نمی‌توانیم از جانب اشخاص ثالث بند ۳ سخن بگوییم؛ آن‌ها همان چیزی را می‌بینند که هر سروری هنگام اتصال شما می‌بیند.</p>
+    </section>
+
+    <section>
+        <h2>۲. داده‌های ذخیره‌شده روی دستگاه شما</h2>
+        <p>موارد زیر به‌صورت محلی و در فضای ذخیره‌ی خصوصی نرم‌افزار روی دستگاه شما نگهداری می‌شود (در iOS در سندباکس برنامه، Keychain و محفظه‌ی گروه برنامه):</p>
+        <ul>
+            <li><strong>پیکربندی‌ها:</strong> سرورها، پیوندهای اشتراک، کلیدها و اعتبارنامه‌ها، قواعد مسیریابی و تنظیماتی که شما یا ارائه‌دهنده‌تان اضافه می‌کنید.</li>
+            <li><strong>داده‌های اشتراک:</strong> فراداده‌ای که ارائه‌دهنده می‌دهد، مانند عنوان، اطلاعات ترافیک و انقضا، اعلان‌ها و نشان.</li>
+            <li><strong>شناسه‌ها:</strong> شناسه‌ی دستگاه (HWID) که در اندروید در صورت وجود از شناسه‌ی پلتفرم مشتق می‌شود و در غیر این صورت تصادفی ساخته می‌شود، و یک شناسه‌ی تصادفی نصب برنامه. این‌ها فقط همان‌گونه که در بند ۳ آمده استفاده می‌شوند و در «تنظیمات ← حریم خصوصی» قابل خاموش کردن هستند.</li>
+            <li><strong>عیب‌یابی:</strong> یک گزارش درون‌برنامه و فایل‌های گزارش که ممکن است شامل رویدادها، نشانی سرورها و پیام‌های خطا باشند. این‌ها تا زمانی که پاک نکنید یا نرم‌افزار را حذف نکنید روی دستگاه می‌مانند و فقط اگر خودتان صادر یا ارسال کنید به اشتراک گذاشته می‌شوند. حالت صرفه‌جویی انرژی ثبت گزارش را کم می‌کند.</li>
+            <li><strong>اندازه‌گیری‌ها:</strong> نتایج تأخیر (پینگ) و، اگر روشن کنید، آخرین نتایج موفق ذخیره‌شده.</li>
+        </ul>
+        <p>برخی قابلیت‌ها به دسترسی محلی نیاز دارند که نرم‌افزار هیچ‌جا نمی‌فرستد: دوربین (برای اسکن کد QR، پردازش روی دستگاه)، فهرست برنامه‌های نصب‌شده (برای مسیریابی بر اساس برنامه)، و مجوزهای اعلان، باتری و نصب که هنگام درخواست می‌دهید.</p>
+    </section>
+
+    <section>
+        <h2>۳. درخواست‌های شبکه‌ای که نرم‌افزار می‌فرستد</h2>
+        <p>نرم‌افزار برای کار کردن باید از شبکه استفاده کند. هر گیرنده‌ی زیر یک شخص ثالث است که دست‌کم نشانی IP شما و جزئیات معمول یک درخواست وب را می‌بیند. ما هیچ‌یک از این‌ها را دریافت نمی‌کنیم.</p>
+        <ul>
+            <li><strong>سرورها و اشتراک‌هایی که اضافه می‌کنید.</strong> ترافیک شما به سرورهای پیکربندی‌هایتان می‌رود و نرم‌افزار پیوندهای اشتراکی را که اضافه می‌کنید دانلود و تازه می‌کند. اپراتورهای آن‌ها می‌توانند نشانی IP شما، ترافیکتان به‌اندازه‌ی تنظیمات خودشان و سرآیندهای درخواست را ببینند. هنگام درخواست اشتراک، نرم‌افزار یک User-Agent و، مگر آنکه در «تنظیمات ← حریم خصوصی» خاموش کرده باشید، سرآیندهای <code>x-hwid</code>، <code>x-app-id</code>، <code>x-device-os</code>، <code>x-ver-os</code>، <code>x-device-model</code> و <code>x-app-version</code> را می‌فرستد. پنل‌ها از آن‌ها برای محدودیت تعداد دستگاه استفاده می‌کنند. با خاموش کردن آن‌ها ممکن است پنل اشتراک را رد کند.</li>
+            <li><strong>گزارش به ارائه‌دهنده (ProviderID سازگار با Happ).</strong> اگر اشتراکی سرآیند <code>providerid</code> داشته باشد، نرم‌افزار روزی یک بار درخواستی به <code>check.happ-proxy.com</code> می‌فرستد که شامل شناسه‌ی ارائه‌دهنده، شناسه‌ی دستگاه، شناسه‌ی برنامه، سیستم‌عامل و نسخه‌ی آن، مدل دستگاه و نسخه‌ی برنامه است. این قابلیت به‌طور پیش‌فرض روشن است و در «تنظیمات ← حریم خصوصی» خاموش می‌شود؛ در حالت خاموش این درخواست فرستاده نمی‌شود. این سرویس را یک شخص ثالث اداره می‌کند.</li>
+            <li><strong>بررسی به‌روزرسانی.</strong> نرم‌افزار آخرین نسخه را از API گیت‌هاب می‌پرسد. این درخواست شناسه‌ی دستگاه شما را شامل نمی‌شود. اگر به‌روزرسانی را دانلود کنید، آن را از گیت‌هاب دانلود می‌کنید.</li>
+            <li><strong>داده‌ی قواعد مسیریابی.</strong> فهرست‌های geo-IP، geo-site، مجموعه‌قواعد و ASN از مخزن‌های عمومی میزبانی‌شده در گیت‌هاب دانلود می‌شوند که نشانی IP شما را می‌بینند.</li>
+            <li><strong>فهرست‌های عمومی سرورهای رایگان.</strong> اگر از قابلیت سرورهای رایگان استفاده کنید، نرم‌افزار فهرست‌هایی را که اشخاص ثالث مستقل منتشر کرده‌اند دانلود می‌کند و سپس با اتصال به سرورهای فهرست، آن‌ها را آزمایش می‌کند. اپراتورهای آن سرورها می‌توانند نشانی IP شما و درخواست‌های آزمایش را ببینند. این سرورها بررسی‌نشده‌اند.</li>
+            <li><strong>Cloudflare WARP.</strong> اگر از قابلیت WARP استفاده کنید (برای نمونه پراکسی تلگرام)، نرم‌افزار یک حساب WARP در Cloudflare ثبت می‌کند. اگر درخواست مستقیم شکست بخورد، ممکن است برای گرفتن پیکربندی از آینه‌های پشتیبان میزبانی‌شده در پلتفرم‌های شخص ثالث استفاده کند. این گیرندگان نشانی IP شما را می‌بینند.</li>
+            <li><strong>بررسی اتصال و نشانی.</strong> آزمایش‌های تأخیر و اتصال از نشانی آزمایشی استفاده می‌کنند که می‌توانید تغییرش دهید (به‌طور پیش‌فرض نشانی <code>generate_204</code> میزبانی‌شده در گوگل). برخی نسخه‌ها همچنین از سرویس‌های عمومی یافتن IP مانند <code>api.ipify.org</code>، <code>icanhazip.com</code>، <code>ifconfig.me</code> و <code>ipinfo.io</code> می‌پرسند تا نشانی خارجی شما را نشان دهند یا بررسی کنند. پنجرهٔ «نشست» (که خودتان باز می‌کنید) علاوه بر این از <code>api6.ipify.org</code> و <code>ipwho.is</code> مالک و مکان نشانی را می‌پرسد و تست سرعت آن داده‌های آزمایشی را از طریق <code>speed.cloudflare.com</code> دانلود و آپلود می‌کند؛ هیچ‌یک از این‌ها در پس‌زمینه اجرا نمی‌شود. این سرویس‌ها نشانی‌ای را که درخواست از آن آمده می‌بینند.</li>
+            <li><strong>DNS.</strong> جست‌وجوی نام‌ها به حل‌کننده‌هایی می‌رود که در پیکربندی یا تنظیمات شما تعیین شده‌اند و اپراتورهای آن‌ها طبق سیاست خودشان درخواست‌ها را می‌بینند.</li>
+            <li><strong>روش‌های اتصالی که انتخاب می‌کنید.</strong> برخی موتورها ترافیک را از طریق پلتفرم‌های شخص ثالث، مانند خدمات تماس تصویری، سند یا پیام‌رسانی، عبور می‌دهند. اگر یکی را انتخاب کنید، آن پلتفرم ترافیک را دریافت می‌کند و طبق شرایط خودش پردازش می‌کند.</li>
+            <li><strong>نصب سرور.</strong> اگر از نصب‌کننده‌ی سرور داخلی استفاده کنید، نرم‌افزار با اطلاعاتی که وارد می‌کنید از طریق SSH به سرور مشخص‌شده‌ی شما وصل می‌شود. این اطلاعات فقط برای همان اتصال استفاده می‌شود و برای ما فرستاده نمی‌شود.</li>
+            <li><strong>پیوندهایی که باز می‌کنید.</strong> پیوند به وب‌سایت‌ها، شبکه‌های اجتماعی یا صفحه‌های کمک مالی در مرورگر یا برنامه‌ی دیگر شما باز می‌شود و تابع سیاست خود آن‌هاست.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>۴. اشخاص ثالث</h2>
+        <p>هر گیرنده‌ی بند ۳ از ما مستقل است. آن‌ها خودشان تصمیم می‌گیرند چه چیزی را ثبت کنند و تا کی نگه دارند، و ما آن‌ها را کنترل یا ممیزی نمی‌کنیم و پاسخگوی آن‌ها نیستیم. سیاست حریم خصوصی خودشان اعمال می‌شود. فقط به سرورها و خدماتی وصل شوید که به آن‌ها اعتماد دارید. ما اطلاعات شما را با تبلیغ‌کنندگان یا مراجع دولتی به اشتراک نمی‌گذاریم، چون آن‌ها را در اختیار نداریم. این بیان آنچه را که قانون ممکن است از اشخاص ثالث بخواهد محدود نمی‌کند.</p>
+    </section>
+
+    <section>
+        <h2>۵. نقش‌ها، مبنای قانونی و حقوق شما</h2>
+        <p>از آنجا که توسعه‌دهندگان داده‌ی شخصی‌ای از نرم‌افزار دریافت نمی‌کنند، ما کنترل‌کننده یا پردازشگر داده‌هایی نیستیم که روی دستگاه شما می‌ماند یا به اشخاص ثالث بند ۳ فرستاده می‌شود. آن اشخاص ثالث از جانب خودشان عمل می‌کنند. اگر قانونی بخشی از پردازش روی دستگاه را به ما نسبت دهد، آن بخش به آنچه در اینجا آمده محدود است و به‌منظور منفعت مشروع ارائه‌ی نرم‌افزاری که خودتان اجرا کرده‌اید، یا با رضایت شما هنگام روشن کردن یک قابلیت انجام می‌شود.</p>
+        <ul>
+            <li><strong>دسترسی، صادر کردن و حذف:</strong> داده‌های شما روی دستگاه شماست. می‌توانید پیکربندی‌ها را در نرم‌افزار صادر کنید، پروفایل‌ها و گزارش‌ها را حذف کنید یا با حذف نرم‌افزار همه‌چیز را پاک کنید.</li>
+            <li><strong>انتخاب:</strong> می‌توانید گزارش به ارائه‌دهنده و ارسال اطلاعات دستگاه را در «تنظیمات ← حریم خصوصی» خاموش کنید و از قابلیت‌های اختیاری بالا استفاده نکنید.</li>
+            <li><strong>درخواست از اشخاص ثالث:</strong> برای دسترسی به داده‌ای که اپراتور سرور، پنل، ارائه‌دهنده‌ی WARP یا سرویس دیگری نگه می‌دارد یا برای حذف آن، مستقیماً با همان طرف تماس بگیرید.</li>
+            <li><strong>داده‌ی تماس با ما:</strong> اگر به ما ایمیل بزنید، نشانی و پیام شما را فقط برای پاسخ پردازش می‌کنیم و تا مدتی که برای این هدف و الزامات قانونی لازم است نگه می‌داریم.</li>
+            <li>بسته به محل اقامت شما (برای نمونه منطقه‌ی اقتصادی اروپا، بریتانیا، کالیفرنیا، روسیه، برزیل و کشورهای دیگر)، ممکن است حقوق بیشتری داشته باشید، از جمله حق شکایت به مرجع حفاظت از داده. هیچ چیز در این سیاست حقوقی را که طبق قانون قابل چشم‌پوشی نیست محدود نمی‌کند.</li>
+        </ul>
+        <p>ما اطلاعات شخصی را آن‌گونه که در قانون کالیفرنیا به کار می‌رود نمی‌فروشیم یا به اشتراک نمی‌گذاریم و از اطلاعات شخصی حساس برای ساخت نمایه استفاده نمی‌کنیم.</p>
+    </section>
+
+    <section>
+        <h2>۶. امنیت</h2>
+        <p>داده‌های پیکربندی در فضای ذخیره‌ی خصوصی نرم‌افزار نگهداری می‌شود (در iOS همچنین در Keychain) و ترافیک به سرورها از پروتکل‌ها و رمزنگاری‌ای استفاده می‌کند که خودتان انتخاب می‌کنید. هیچ نرم‌افزار یا شبکه‌ای کاملاً امن نیست. ما تضمین نمی‌کنیم که کسی که به دستگاه شما، سروری که استفاده می‌کنید یا شبکه‌ای که استفاده می‌کنید دسترسی دارد نتواند به داده‌های شما دست یابد.</p>
+    </section>
+
+    <section>
+        <h2>۷. نگهداری و انتقال بین‌المللی</h2>
+        <p>داده‌های روی دستگاه شما تا زمانی که حذفشان کنید یا نرم‌افزار را حذف کنید باقی می‌مانند. ما داده‌ای از نرم‌افزار نگه نمی‌داریم. درخواست‌های شما به سرورها و خدماتی می‌رود که استفاده می‌کنید، هر کجا که باشند، حتی در کشورهای دیگر، و توسعه‌دهندگان این انتقال‌ها را کنترل نمی‌کنند.</p>
+    </section>
+
+    <section>
+        <h2>۸. کودکان</h2>
+        <p>نرم‌افزار برای کودکان نیست. ما آگاهانه از هیچ‌کس، از جمله کودکان زیر ۱۳ سال (یا زیر ۱۶ سال در جاهایی که سن رضایت محلی این است)، داده‌ی شخصی جمع نمی‌کنیم. والدین یا سرپرستانی که گمان می‌کنند کودکی با نرم‌افزار داده‌ای را با شخص ثالثی به اشتراک گذاشته باید با همان شخص ثالث تماس بگیرند.</p>
+    </section>
+
+    <section>
+        <h2>۹. پلتفرم‌های اپل</h2>
+        <p>در iOS نرم‌افزار از چارچوب NetworkExtension اپل (ارائه‌دهنده‌ی تونل بسته) برای ساخت یک رابط شبکه‌ی مجازی و مسیریابی بسته‌ها روی دستگاه شما طبق پیکربندی‌تان استفاده می‌کند. این پردازش به‌صورت محلی روی دستگاه انجام می‌شود.</p>
+    </section>
+
+    <section>
+        <h2>۱۰. تغییرات</h2>
+        <p>ممکن است با تغییر نرم‌افزار یا به‌حکم قانون این سیاست را به‌روزرسانی کنیم. نسخه‌ی جدید با تاریخ به‌روز در همین صفحه منتشر می‌شود. ادامه‌ی استفاده به معنای پذیرش تغییر است.</p>
+    </section>
+
+    <section>
+        <h2>۱۱. تماس</h2>
+        <p>پرسش درباره‌ی این سیاست: <a href="mailto:yptunn@gmail.com" style="color: var(--accent); text-decoration: none;">yptunn@gmail.com</a></p>
+    </section>
+</div>
 </main>
-
 <footer>
-    <p>&copy; 2026 YPtun. All rights reserved. &bull; <a href="index.html">Home</a> &bull; <a href="terms.html">Terms of Service</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="support.html">Support</a></p>
+    <p><span data-l="en">&copy; 2026 YPtun. All rights reserved. &bull; <a href="index.html">Home</a> &bull; <a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="support.html">Support</a></span><span data-l="ru">&copy; 2026 YPtun. Все права защищены. &bull; <a href="index.html">Главная</a> &bull; <a href="terms.html">Условия использования</a> &bull; <a href="privacy.html">Политика конфиденциальности</a> &bull; <a href="support.html">Поддержка</a></span><span data-l="zh">&copy; 2026 YPtun. 保留所有权利。 &bull; <a href="index.html">首页</a> &bull; <a href="terms.html">使用条款</a> &bull; <a href="privacy.html">隐私政策</a> &bull; <a href="support.html">支持</a></span><span data-l="fa">&copy; 2026 YPtun. کلیه حقوق محفوظ است. &bull; <a href="index.html">خانه</a> &bull; <a href="terms.html">شرایط استفاده</a> &bull; <a href="privacy.html">سیاست حریم خصوصی</a> &bull; <a href="support.html">پشتیبانی</a></span></p>
 </footer>
-
 </body>
 </html>

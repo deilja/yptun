@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
+import org.olcbox.app.data.model.AppBehaviorSettings
 import org.olcbox.app.data.share.ConfigShareService
 import org.olcbox.app.update.AndroidUpdateSettingsStore
 import org.olcbox.app.update.AppUpdateInfo
@@ -447,6 +448,18 @@ fun AndroidMainScreen(
         navigateHomeFromLocationSettings()
     }
 
+    // One way to change the app behaviour, from the settings sheet and from the home screen's ⋮ sheets alike.
+    val applyAppBehavior: (AppBehaviorSettings) -> Unit = { newBehavior ->
+        val expiryJustEnabled = (newBehavior.showSubscriptionExpiry && !appBehavior.showSubscriptionExpiry) ||
+            (newBehavior.showSubscriptionDescription && !appBehavior.showSubscriptionDescription)
+        vpnManager.setAppBehavior(newBehavior)
+        // Turning either header toggle on refreshes every subscription right away, so the
+        // "до …" date / panel description appear without waiting for the next poll.
+        if (expiryJustEnabled) {
+            viewModel.refreshSubscriptionExpiryNow()
+        }
+    }
+
     androidx.compose.runtime.CompositionLocalProvider(
         org.olcbox.app.ui.features.locations.components.LocalPingResultDisplay provides appBehavior.pingResultDisplay,
         org.olcbox.app.ui.features.locations.components.LocalShowSubscriptionExpiry provides appBehavior.showSubscriptionExpiry,
@@ -461,6 +474,11 @@ fun AndroidMainScreen(
             (if (appBehavior.showSpeedOnHome && isVpnConnected) liveSpeed else null)
     ) {
     OlcboxAppContent(
+        appBehavior = appBehavior,
+        onAppBehaviorChanged = applyAppBehavior,
+        onShareSubscriptionRequested = { url ->
+            shareSheetPayload = s.subscriptionQr to ConfigShareService.subscriptionQrText(url)
+        },
         homeViewModel = viewModel,
         locationViewModel = locationViewModel,
         currentScreen = currentScreen,
@@ -501,6 +519,13 @@ fun AndroidMainScreen(
                     Toast.makeText(context, s.cannotOpenFilePicker(it.message ?: ""), Toast.LENGTH_LONG).show()
                 }
         },
+        onImportTextRequested = { text, onImported, onError ->
+            viewModel.onImportFullConfig(
+                rawText = text,
+                onComplete = { reloadLocationsAfterImport(onImported) },
+                onError = onError
+            )
+        },
         onImportFromClipboardRequested = { onImported, onError ->
             viewModel.onPasteFromClipboard(
                 onComplete = {
@@ -516,8 +541,8 @@ fun AndroidMainScreen(
             viewModel.onCopyFullConfigClicked()
         },
         onShareLocationRequested = { config ->
-            // Share our universal yptun:// link (carries the whole inbound incl. proxy + toggles).
-            shareSheetPayload = s.locationQr to org.olcbox.app.data.share.YptunInboundCodec.compose(config)
+            // yptun:// (whole inbound incl. proxy + toggles) or the engine's own link, per the setting.
+            shareSheetPayload = s.locationQr to ConfigShareService.shareLink(config, appBehavior.shareUniversalLink)
         },
         onSaveLogsRequested = { onSaved, onError ->
             pendingLogSaveCallbacks.value = onSaved to onError
@@ -527,7 +552,7 @@ fun AndroidMainScreen(
         showSplitTunnelingButton = false,
         canScanQr = true,
         confirmBeforeDelete = appBehavior.confirmBeforeDelete,
-        allowVpsAutoInstall = appBehavior.allowVpsAutoInstall,
+        allowVpsAutoInstall = !appBehavior.hideSshInstall,
         pingParallelism = appBehavior.effectivePingParallelism(),
         freeServersLimit = appBehavior.freeServersLimit,
         updateAvailable = updateAvailable != null,
@@ -725,16 +750,7 @@ fun AndroidMainScreen(
             onTrafficChanged = vpnManager::setTrafficSettings,
             appBehavior = appBehavior,
             telegramProxyState = telegramProxyState,
-            onAppBehaviorChanged = { newBehavior ->
-                val expiryJustEnabled = (newBehavior.showSubscriptionExpiry && !appBehavior.showSubscriptionExpiry) ||
-                    (newBehavior.showSubscriptionDescription && !appBehavior.showSubscriptionDescription)
-                vpnManager.setAppBehavior(newBehavior)
-                // Turning either header toggle on refreshes every subscription right away, so the
-                // "до …" date / panel description appear without waiting for the next poll.
-                if (expiryJustEnabled) {
-                    viewModel.refreshSubscriptionExpiryNow()
-                }
-            },
+            onAppBehaviorChanged = applyAppBehavior,
             language = language,
             onLanguageChanged = vpnManager::setLanguage,
             updateSettings = updateSettings,
