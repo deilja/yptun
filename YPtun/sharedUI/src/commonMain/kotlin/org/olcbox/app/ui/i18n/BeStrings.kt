@@ -148,7 +148,7 @@ object BeStrings : Strings {
     override val supportVpnSub = "Падпіска і асабісты кабінет XFi"
     override val supportVpnSubHint = "Ключы, аплата і кіраванне падпіскай · Telegram @XFI_VPN_bot"
     override val telegramRescueTitle = "Telegram не адкрываецца?"
-    override val telegramRescueHint = "Службовы рэжым: уключыць толькі Telegram — дайсці да бота і аформіць падпіску"
+    override val telegramRescueHint = "Убудаваны проксі Telegram (SOCKS5 праз WARP): без падпіскі і VPN — Telegram адкрыецца з гатовымі наладамі проксі"
     override val supportGithubStar = "Паставіць зорку праекту на GitHub"
     override val supportGithubStarHint = "Бясплатны спосаб дапамагчы праекту"
     override val autoConnectTitle = "Аўтазлучэнне пры запуску"

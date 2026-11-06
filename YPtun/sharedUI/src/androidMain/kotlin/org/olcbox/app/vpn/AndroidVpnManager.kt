@@ -39,9 +39,6 @@ import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING
 import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING_PROFILES
 import org.olcbox.app.vpn.data.KEY_ANDROID_TRAFFIC
 import org.olcbox.app.data.model.LocationConfig
-import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
-import org.olcbox.app.data.model.TELEGRAM_RESCUE_PACKAGES
-import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
 import org.olcbox.app.data.datasource.LocationsDataSourceImpl
 import org.olcbox.app.data.datasource.LocationsRepositoryImpl
 import org.olcbox.app.data.identity.PersistentDeviceIdentityProvider
@@ -184,12 +181,20 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
         }
         refreshInstalledApps()
 
-        // XFi: seed the built-in "Telegram rescue" location (see BuiltinTelegram.kt) so it is
-        // always present in the user's bundle — the home card connects it for a user whose
-        // Telegram is blocked before they have any subscription. Idempotent: a no-op once
-        // present, re-added if the user deleted it, never touches other locations.
+        // XFi: the built-in "Telegram rescue" service location was removed in 3.7.8 — the home
+        // Telegram card now drives the built-in SOCKS5/WARP proxy instead (TelegramProxyService),
+        // so the app no longer ships a hardcoded service endpoint. Delete the copy seeded by
+        // 3.7.0–3.7.7 from the user's bundle so it disappears from their list too.
         scope.launch {
-            runCatching { ensureBuiltinTelegramLocation(locationsRepository) }
+            runCatching {
+                val bundle = locationsRepository.getBundle()
+                if (bundle.locations.any { it.storageId == "builtin_telegram" }) {
+                    locationsRepository.deleteLocation("builtin_telegram")
+                    if (bundle.activeLocationId == "builtin_telegram") {
+                        locationsRepository.setActiveLocationId(null)
+                    }
+                }
+            }
         }
 
         // XFi: the built-in "YouTube direct" test profile was removed in 3.7.6 — delete the
@@ -777,20 +782,7 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
     }
 
     private fun sendStartVpnIntent(activeLocationId: String?) {
-        // Built-in Telegram rescue active: route ONLY the Telegram apps into the tunnel,
-        // whatever the user's global split-tunnel setting says. This is an intent-local
-        // override ONLY — the stored setting (_splitTunnelSettings / DataStore) is not
-        // touched, so the next normal start uses the user's own choice again. The profile's
-        // raw Xray config independently fences traffic to Telegram destinations.
-        val splitTunnel = if (activeLocationId == BUILTIN_TELEGRAM_ID) {
-            AndroidSplitTunnelSettings(
-                mode = AndroidSplitTunnelMode.ProxySelected,
-                proxyPackages = TELEGRAM_RESCUE_PACKAGES.toSet(),
-                bypassPackages = emptySet()
-            )
-        } else {
-            _splitTunnelSettings.value
-        }
+        val splitTunnel = _splitTunnelSettings.value
         val intent = Intent().apply {
             setClassName(context.packageName, OlcboxVpnActions.SERVICE_CLASS_NAME)
             action = OlcboxVpnActions.ACTION_START_VPN

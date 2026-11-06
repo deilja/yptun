@@ -98,6 +98,33 @@ fun AndroidMainScreen(
     val trafficSettings by vpnManager.trafficSettings.collectAsState()
     val appBehavior by vpnManager.appBehavior.collectAsState()
     val telegramProxyState by vpnManager.telegramProxyState.collectAsState()
+    // XFi Telegram card: after the tap the built-in SOCKS5/WARP proxy is enabled; once it is
+    // actually Running we hand its settings to Telegram (tg://socks deep link, https fallback —
+    // the same handoff as the settings sheet's "Open in Telegram" button).
+    val pendingTgProxyOpen = remember { mutableStateOf(false) }
+    fun openTelegramWithProxy(running: org.olcbox.app.vpn.telegram.TelegramProxyState.Running) {
+        val tgDeep = "tg://socks?server=${running.host}&port=${running.port}" +
+            "&user=${running.user}&pass=${running.pass}"
+        val tgLink = "https://t.me/socks?server=${running.host}&port=${running.port}" +
+            "&user=${running.user}&pass=${running.pass}"
+        val opened = runCatching {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(tgDeep)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }.isSuccess
+        if (!opened) runCatching {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(tgLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+    LaunchedEffect(telegramProxyState, pendingTgProxyOpen.value) {
+        val running = telegramProxyState as? org.olcbox.app.vpn.telegram.TelegramProxyState.Running
+        if (pendingTgProxyOpen.value && running != null) {
+            pendingTgProxyOpen.value = false
+            openTelegramWithProxy(running)
+        }
+    }
     val language by vpnManager.language.collectAsState()
     val installedApps by vpnManager.installedApps.collectAsState()
     val homeState by viewModel.state.collectAsState()
@@ -354,7 +381,6 @@ fun AndroidMainScreen(
         if (result.resultCode == Activity.RESULT_OK) {
             when (val action = pendingVpnAction.value) {
                 PendingVpnPermissionAction.Toggle -> viewModel.ToggleVpn()
-                PendingVpnPermissionAction.TelegramRescue -> viewModel.connectTelegramRescue()
                 is PendingVpnPermissionAction.RestartWithMode -> {
                     vpnManager.selectConnectionMode(action.mode)
                     viewModel.restartVpnIfRunning()
@@ -497,18 +523,17 @@ fun AndroidMainScreen(
             }
         },
         onTelegramRescueClick = {
-            // Same VPN-permission dance as the main toggle: prepare() first when in Tun mode,
-            // connect right away when the permission is already granted (or not needed).
-            val prepIntent = if (connectionMode == AndroidConnectionMode.Tun) {
-                VpnService.prepare(context)
+            // XFi Telegram card → the built-in SOCKS5/WARP proxy (no VPN permission needed: it is
+            // a plain foreground service, not the VpnService). Already running → hand the settings
+            // to Telegram right away; otherwise enable it and open Telegram once it is up.
+            val running = telegramProxyState as? org.olcbox.app.vpn.telegram.TelegramProxyState.Running
+            if (running != null) {
+                openTelegramWithProxy(running)
             } else {
-                null
-            }
-            if (prepIntent != null) {
-                pendingVpnAction.value = PendingVpnPermissionAction.TelegramRescue
-                vpnRequestLauncher.launch(prepIntent)
-            } else {
-                viewModel.connectTelegramRescue()
+                pendingTgProxyOpen.value = true
+                if (!appBehavior.telegramProxyEnabled) {
+                    vpnManager.setAppBehavior(appBehavior.copy(telegramProxyEnabled = true))
+                }
             }
         },
         onImportFileRequested = {
@@ -856,7 +881,6 @@ fun AndroidMainScreen(
 
 private sealed class PendingVpnPermissionAction {
     object Toggle : PendingVpnPermissionAction()
-    object TelegramRescue : PendingVpnPermissionAction()
     data class RestartWithMode(val mode: AndroidConnectionMode) : PendingVpnPermissionAction()
 }
 

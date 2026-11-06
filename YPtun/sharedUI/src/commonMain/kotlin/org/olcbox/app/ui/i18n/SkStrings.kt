@@ -155,7 +155,7 @@ object SkStrings : Strings {
     override val supportVpnSub = "Predplatné a osobný účet XFi"
     override val supportVpnSubHint = "Kľúče, platba a správa predplatného · Telegram @XFI_VPN_bot"
     override val telegramRescueTitle = "Telegram sa neotvára?"
-    override val telegramRescueHint = "Servisný režim: zapne iba Telegram — dostanete sa k botovi a vybavíte si predplatné"
+    override val telegramRescueHint = "Vstavaná Telegram proxy (SOCKS5 cez WARP): bez predplatného a VPN — Telegram sa otvorí s pripraveným nastavením proxy"
     override val supportGithubStar = "Dať projektu hviezdičku na GitHube"
     override val supportGithubStarHint = "Bezplatný spôsob, ako projektu pomôcť"
     override val autoConnectTitle = "Automatické pripojenie pri spustení"

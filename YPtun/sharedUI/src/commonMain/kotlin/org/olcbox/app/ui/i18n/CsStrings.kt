@@ -155,7 +155,7 @@ object CsStrings : Strings {
     override val supportVpnSub = "Předplatné a osobní účet XFi"
     override val supportVpnSubHint = "Klíče, platba a správa předplatného · Telegram @XFI_VPN_bot"
     override val telegramRescueTitle = "Telegram se neotevírá?"
-    override val telegramRescueHint = "Servisní režim: zapne pouze Telegram — dostanete se k botovi a pořídíte si předplatné"
+    override val telegramRescueHint = "Vestavěná Telegram proxy (SOCKS5 přes WARP): bez předplatného a VPN — Telegram se otevře s připraveným nastavením proxy"
     override val supportGithubStar = "Dát projektu hvězdičku na GitHubu"
     override val supportGithubStarHint = "Bezplatný způsob, jak projektu pomoci"
     override val autoConnectTitle = "Automatické připojení při spuštění"

@@ -106,7 +106,7 @@ fun HomeScreen(
     locationViewModel: LocationViewModel,
     scrollState: LazyListState,
     onToggleClick: () -> Unit = { viewModel.ToggleVpn() },
-    onTelegramRescueClick: () -> Unit = { viewModel.connectTelegramRescue() },
+    onTelegramRescueClick: () -> Unit = {},
     onImportFileRequested: () -> Unit = {},
     onImportFromClipboardRequested: (onImported: () -> Unit, onError: (String) -> Unit) -> Unit = { _, _ -> },
     onScanQrRequested: () -> Unit = {},
@@ -607,10 +607,10 @@ fun HomeScreen(
             }
 
             item(key = "xfi-telegram") {
-                // XFi: Telegram rescue — for a user whose Telegram is blocked outright, so the
-                // bot card above can't be reached at all. One tap connects the built-in service
-                // profile that routes ONLY the Telegram apps (see BuiltinTelegram.kt); the click
-                // itself is routed through the platform VPN-permission flow by the caller.
+                // XFi: Telegram card — for a user whose Telegram is blocked outright, so the
+                // bot card above can't be reached at all. One tap enables the app's built-in
+                // SOCKS5/WARP Telegram proxy (no subscription, no service server); the platform
+                // caller then hands the proxy settings to Telegram itself.
                 Surface(
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
