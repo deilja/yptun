@@ -17,6 +17,8 @@ import org.olcbox.app.ui.features.home.HomeScreen
 import org.olcbox.app.ui.features.home.HomeScreenViewModel
 import org.olcbox.app.ui.features.locations.LocationSettingsScreen
 import org.olcbox.app.ui.features.locations.LocationViewModel
+import org.olcbox.app.ui.legacy.HomeScreen as LegacyHomeScreen
+import org.olcbox.app.ui.legacy.LocationSettingsScreen as LegacyLocationSettingsScreen
 import org.olcbox.app.ui.navigation.AppScreen
 
 @Composable
@@ -26,11 +28,13 @@ fun OlcboxAppContent(
     currentScreen: AppScreen,
     onNavigate: (AppScreen) -> Unit,
     onToggleClick: () -> Unit,
-    // XFi Telegram-rescue card click. Android overrides this to run the VPN-permission flow
-    // first (like onToggleClick); other platforms connect directly through the view model.
-    onTelegramRescueClick: () -> Unit = { homeViewModel.connectTelegramRescue() },
+    // XFi Telegram card click. Android overrides this to enable the built-in SOCKS5/WARP
+    // Telegram proxy and hand its settings to Telegram; other platforms leave it inert.
+    onTelegramRescueClick: () -> Unit = {},
     onImportFileRequested: () -> Unit,
     onImportFromClipboardRequested: (onImported: () -> Unit, onError: (String) -> Unit) -> Unit,
+    // The «Добавить» field: import this text and reload the list (null → import without a platform reload).
+    onImportTextRequested: ((text: String, onImported: () -> Unit, onError: (String) -> Unit) -> Unit)? = null,
     onScanQrRequested: () -> Unit = {},
     onCopyConfigRequested: () -> Unit,
     onShareLocationRequested: (LocationConfig) -> Unit = {},
@@ -75,7 +79,11 @@ fun OlcboxAppContent(
     wideLayout: Boolean = false,
     extraConnectContent: (@Composable () -> Unit)? = null,
     // Desktop only: shows an exit button in the home screen's top bar.
-    onExitClick: (() -> Unit)? = null
+    onExitClick: (() -> Unit)? = null,
+    // For the home screen's ⋮ «Вид списка» / «Настройки пинга» sheets; null keeps them hidden.
+    appBehavior: AppBehaviorSettings? = null,
+    onAppBehaviorChanged: (AppBehaviorSettings) -> Unit = {},
+    onShareSubscriptionRequested: ((url: String) -> Unit)? = null
 ) {
     val homeScrollState = rememberLazyListState()
 
@@ -116,78 +124,170 @@ fun OlcboxAppContent(
     ) { screen ->
         when (screen) {
             AppScreen.Home -> {
-                HomeScreen(
-                    viewModel = homeViewModel,
-                    locationViewModel = locationViewModel,
-                    scrollState = homeScrollState,
-                    onToggleClick = onToggleClick,
-                    onTelegramRescueClick = onTelegramRescueClick,
-                    onImportFileRequested = onImportFileRequested,
-                    onImportFromClipboardRequested = onImportFromClipboardRequested,
-                    onScanQrRequested = onScanQrRequested,
-                    onCopyConfigRequested = onCopyConfigRequested,
-                    onSaveLogsRequested = onSaveLogsRequested,
-                    showAppSettingsButton = showAppSettingsButton,
-                    showSplitTunnelingButton = showSplitTunnelingButton,
-                    canScanQr = canScanQr,
-                    onAppSettingsClick = onAppSettingsClick,
-                    onSplitTunnelingClick = onSplitTunnelingClick,
-                    onOpenLocationSettings = { id ->
-                        locationViewModel.startEditing(id)
-                        onNavigate(AppScreen.LocationSettings(id))
-                    },
-                    onAddLocation = {
-                        locationViewModel.startEditing(null)
-                        onNavigate(AppScreen.LocationSettings(null))
-                    },
-                    confirmBeforeDelete = confirmBeforeDelete,
-                    pingParallelism = pingParallelism,
-                    freeServersLimit = freeServersLimit,
-                    updateAvailable = updateAvailable,
-                    onUpdateClick = onUpdateClick,
-                    onUnlockExperimental = onUnlockExperimental,
-                    collapsedGroups = collapsedGroups,
-                    pinnedGroups = pinnedGroups,
-                    pingSortedGroups = pingSortedGroups,
-                    pingSortDescendingGroups = pingSortDescendingGroups,
-                    pinnedCustomLocations = pinnedCustomLocations,
-                    customLocationsPingSorted = customLocationsPingSorted,
-                    customLocationsPingSortDescending = customLocationsPingSortDescending,
-                    twoColumns = twoColumns,
-                    showAutoButton = showAutoButton,
-                    showGroupAutoPick = showGroupAutoPick,
-                    onToggleGroupCollapsed = onToggleGroupCollapsed,
-                    onToggleGroupPinned = onToggleGroupPinned,
-                    onSubscriptionKeyChanged = onSubscriptionKeyChanged,
-                    onToggleGroupPingSort = onToggleGroupPingSort,
-                    onToggleCustomLocationPinned = onToggleCustomLocationPinned,
-                    onToggleCustomLocationsPingSort = onToggleCustomLocationsPingSort,
-                    customGroups = customGroups,
-                    onCreateFolder = onCreateFolder,
-                    onRenameFolder = onRenameFolder,
-                    onDeleteFolder = onDeleteFolder,
-                    onAddToFolder = onAddToFolder,
-                    onRemoveFromFolder = onRemoveFromFolder,
-                    onToggleFolderPinned = onToggleFolderPinned,
-                    onToggleFolderCollapsed = onToggleFolderCollapsed,
-                    wideLayout = wideLayout,
-                    extraConnectContent = extraConnectContent,
-                    onExitClick = onExitClick
-                )
+                if (appBehavior?.legacyUi == true) {
+                    LegacyHomeScreen(
+                        viewModel = homeViewModel,
+                        locationViewModel = locationViewModel,
+                        scrollState = homeScrollState,
+                        onToggleClick = onToggleClick,
+                        onImportFileRequested = onImportFileRequested,
+                        onImportFromClipboardRequested = onImportFromClipboardRequested,
+                        onScanQrRequested = onScanQrRequested,
+                        onCopyConfigRequested = onCopyConfigRequested,
+                        onSaveLogsRequested = onSaveLogsRequested,
+                        showAppSettingsButton = showAppSettingsButton,
+                        showSplitTunnelingButton = showSplitTunnelingButton,
+                        canScanQr = canScanQr,
+                        onAppSettingsClick = onAppSettingsClick,
+                        onSplitTunnelingClick = onSplitTunnelingClick,
+                        onOpenLocationSettings = { id ->
+                            locationViewModel.startEditing(id)
+                            onNavigate(AppScreen.LocationSettings(id))
+                        },
+                        onAddLocation = {
+                            locationViewModel.startEditing(null)
+                            onNavigate(AppScreen.LocationSettings(null))
+                        },
+                        confirmBeforeDelete = confirmBeforeDelete,
+                        pingParallelism = pingParallelism,
+                        freeServersLimit = freeServersLimit,
+                        updateAvailable = updateAvailable,
+                        onUpdateClick = onUpdateClick,
+                        onUnlockExperimental = onUnlockExperimental,
+                        collapsedGroups = collapsedGroups,
+                        pinnedGroups = pinnedGroups,
+                        pingSortedGroups = pingSortedGroups,
+                        pingSortDescendingGroups = pingSortDescendingGroups,
+                        pinnedCustomLocations = pinnedCustomLocations,
+                        customLocationsPingSorted = customLocationsPingSorted,
+                        customLocationsPingSortDescending = customLocationsPingSortDescending,
+                        twoColumns = twoColumns,
+                        showAutoButton = showAutoButton,
+                        showGroupAutoPick = showGroupAutoPick,
+                        onToggleGroupCollapsed = onToggleGroupCollapsed,
+                        onToggleGroupPinned = onToggleGroupPinned,
+                        onSubscriptionKeyChanged = onSubscriptionKeyChanged,
+                        onToggleGroupPingSort = onToggleGroupPingSort,
+                        onToggleCustomLocationPinned = onToggleCustomLocationPinned,
+                        onToggleCustomLocationsPingSort = onToggleCustomLocationsPingSort,
+                        customGroups = customGroups,
+                        onCreateFolder = onCreateFolder,
+                        onRenameFolder = onRenameFolder,
+                        onDeleteFolder = onDeleteFolder,
+                        onAddToFolder = onAddToFolder,
+                        onRemoveFromFolder = onRemoveFromFolder,
+                        onToggleFolderPinned = onToggleFolderPinned,
+                        onToggleFolderCollapsed = onToggleFolderCollapsed,
+                        wideLayout = wideLayout,
+                        extraConnectContent = extraConnectContent,
+                        onExitClick = onExitClick
+                    )
+                    } else {
+                    HomeScreen(
+                        viewModel = homeViewModel,
+                        locationViewModel = locationViewModel,
+                        scrollState = homeScrollState,
+                        onToggleClick = onToggleClick,
+                        onTelegramRescueClick = onTelegramRescueClick,
+                        onImportFileRequested = onImportFileRequested,
+                        onImportFromClipboardRequested = onImportFromClipboardRequested,
+                        onScanQrRequested = onScanQrRequested,
+                        onCopyConfigRequested = onCopyConfigRequested,
+                        onSaveLogsRequested = onSaveLogsRequested,
+                        showAppSettingsButton = showAppSettingsButton,
+                        showSplitTunnelingButton = showSplitTunnelingButton,
+                        canScanQr = canScanQr,
+                        onAppSettingsClick = onAppSettingsClick,
+                        onSplitTunnelingClick = onSplitTunnelingClick,
+                        onOpenLocationSettings = { id ->
+                            locationViewModel.startEditing(id)
+                            onNavigate(AppScreen.LocationSettings(id))
+                        },
+                        onAddLocation = {
+                            locationViewModel.startEditing(null)
+                            onNavigate(AppScreen.LocationSettings(null))
+                        },
+                        onAddLocationOfType = { engine, wireguard ->
+                            locationViewModel.startEditing(null)
+                            if (wireguard) locationViewModel.onWireguardEngineSelected()
+                            else locationViewModel.onEngineChanged(engine)
+                            onNavigate(AppScreen.LocationSettings(null))
+                        },
+                        onAddVlessLocation = {
+                            locationViewModel.startEditing(null)
+                            locationViewModel.onVlessEngineSelected()
+                            onNavigate(AppScreen.LocationSettings(null))
+                        },
+                        onImportTextRequested = onImportTextRequested
+                            ?: { text: String, onImported: () -> Unit, onError: (String) -> Unit ->
+                                homeViewModel.onImportFullConfig(text, onImported, onError)
+                            },
+                        confirmBeforeDelete = confirmBeforeDelete,
+                        pingParallelism = pingParallelism,
+                        freeServersLimit = freeServersLimit,
+                        updateAvailable = updateAvailable,
+                        onUpdateClick = onUpdateClick,
+                        onUnlockExperimental = onUnlockExperimental,
+                        collapsedGroups = collapsedGroups,
+                        pinnedGroups = pinnedGroups,
+                        pingSortedGroups = pingSortedGroups,
+                        pingSortDescendingGroups = pingSortDescendingGroups,
+                        pinnedCustomLocations = pinnedCustomLocations,
+                        customLocationsPingSorted = customLocationsPingSorted,
+                        customLocationsPingSortDescending = customLocationsPingSortDescending,
+                        twoColumns = twoColumns,
+                        showAutoButton = showAutoButton,
+                        showGroupAutoPick = showGroupAutoPick,
+                        onToggleGroupCollapsed = onToggleGroupCollapsed,
+                        onToggleGroupPinned = onToggleGroupPinned,
+                        onSubscriptionKeyChanged = onSubscriptionKeyChanged,
+                        onToggleGroupPingSort = onToggleGroupPingSort,
+                        onToggleCustomLocationPinned = onToggleCustomLocationPinned,
+                        onToggleCustomLocationsPingSort = onToggleCustomLocationsPingSort,
+                        customGroups = customGroups,
+                        onCreateFolder = onCreateFolder,
+                        onRenameFolder = onRenameFolder,
+                        onDeleteFolder = onDeleteFolder,
+                        onAddToFolder = onAddToFolder,
+                        onRemoveFromFolder = onRemoveFromFolder,
+                        onToggleFolderPinned = onToggleFolderPinned,
+                        onToggleFolderCollapsed = onToggleFolderCollapsed,
+                        wideLayout = wideLayout,
+                        extraConnectContent = extraConnectContent,
+                        onExitClick = onExitClick,
+                        appBehavior = appBehavior,
+                        onAppBehaviorChanged = onAppBehaviorChanged,
+                        onShareSubscriptionRequested = onShareSubscriptionRequested
+                    )
+                    }
             }
 
             is AppScreen.LocationSettings -> {
-                LocationSettingsScreen(
-                    viewModel = locationViewModel,
-                    homeViewModel = homeViewModel,
-                    allowVpsAutoInstall = allowVpsAutoInstall,
-                    confirmBeforeDelete = confirmBeforeDelete,
-                    onShareLocationRequested = onShareLocationRequested,
-                    onBack = {
-                        homeViewModel.loadCurrentConfig()
-                        onNavigate(AppScreen.Home)
+                if (appBehavior?.legacyUi == true) {
+                    LegacyLocationSettingsScreen(
+                        viewModel = locationViewModel,
+                        homeViewModel = homeViewModel,
+                        allowVpsAutoInstall = appBehavior.allowVpsAutoInstall,
+                        confirmBeforeDelete = confirmBeforeDelete,
+                        onShareLocationRequested = onShareLocationRequested,
+                        onBack = {
+                            homeViewModel.loadCurrentConfig()
+                            onNavigate(AppScreen.Home)
+                        }
+                    )
+                    } else {
+                    LocationSettingsScreen(
+                        viewModel = locationViewModel,
+                        homeViewModel = homeViewModel,
+                        allowVpsAutoInstall = allowVpsAutoInstall,
+                        confirmBeforeDelete = confirmBeforeDelete,
+                        onShareLocationRequested = onShareLocationRequested,
+                        onBack = {
+                            homeViewModel.loadCurrentConfig()
+                            onNavigate(AppScreen.Home)
+                        }
+                    )
                     }
-                )
             }
         }
     }

@@ -32,10 +32,8 @@ import org.olcbox.app.data.model.LocationMetadata
 import org.olcbox.app.data.model.ProxyProfile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
 import org.olcbox.app.data.model.LocationEntry
 import org.olcbox.app.data.model.SubscriptionMetadata
-import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
 import org.olcbox.app.data.repository.LocationsRepository
 import org.olcbox.app.data.share.YptunInboundCodec
 import org.olcbox.app.ui.features.home.components.FreeServerItem
@@ -150,7 +148,13 @@ class HomeScreenViewModel(
     }
 
     suspend fun performPingFor(config: LocationConfig): Long? {
-        return vpnManager.ping(config)
+        // Tunnel-only engines are probed through the LIVE tunnel, so for any location other than the
+        // connected one that measures the wrong tunnel (a bogus 0–2 ms) — keep the neutral dash (null).
+        val tunnelOnly = config.engine == EngineType.VkTurn || config.engine == EngineType.MasterDns ||
+            config.engine == EngineType.OpenFlux || config.engine == EngineType.Snolc
+        val isActive = config.normalized() == _state.value.configData
+        if (tunnelOnly && !isActive) return null
+        return vpnManager.ping(config, isActive)
     }
 
     /** Budget for one location's whole ping (see [VpnManager.pingBudgetMs]). */
@@ -196,29 +200,6 @@ class HomeScreenViewModel(
                     }
                     vpnManager.startVpn()
                 }
-            } catch (e: Exception) {
-                _state.update { it.copy(isVpnLoading = false) }
-            }
-        }
-    }
-
-    /**
-     * XFi "Telegram rescue" (the home card under the bot card): connects the built-in service
-     * profile ([BUILTIN_TELEGRAM_ID]) that routes ONLY the Telegram apps to the XFi bot, for a
-     * user whose Telegram is blocked before they have any subscription. Ensures the profile is
-     * seeded, makes it active and starts the VPN — when already connected, startVpn()'s
-     * ACTION_START_VPN restart switches the live tunnel onto it (the same path
-     * [restartVpnIfRunning] relies on). The platform layer routes the actual click through the
-     * VPN-permission flow first (Android: VpnService.prepare), exactly like the main toggle.
-     */
-    fun connectTelegramRescue() {
-        viewModelScope.launch {
-            _state.update { it.copy(isVpnLoading = true, connectError = null) }
-            try {
-                ensureBuiltinTelegramLocation(locationsRepository)
-                locationsRepository.setActiveLocationId(BUILTIN_TELEGRAM_ID)
-                loadCurrentConfigNow()
-                vpnManager.startVpn()
             } catch (e: Exception) {
                 _state.update { it.copy(isVpnLoading = false) }
             }
@@ -348,6 +329,9 @@ class HomeScreenViewModel(
                 .onFailure { error -> onError(error.message ?: "Failed to share logs") }
         }
     }
+
+    /** The live tunnel's SOCKS endpoint (null when not connected); «Сессия» goes out through it. */
+    fun tunnelProxy() = vpnManager.subscriptionFetchProxy()
 
     fun onPasteFromClipboard(
         onComplete: () -> Unit = {},

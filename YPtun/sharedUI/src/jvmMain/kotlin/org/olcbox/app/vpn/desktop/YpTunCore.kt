@@ -106,6 +106,24 @@ internal interface YpTunCoreLib : Library {
         socksPass: String,
     ): Pointer?
 
+    fun YpRtcStartRoom(
+        carrier: String,
+        transport: String,
+        roomId: String,
+        clientId: String,
+        keyHex: String,
+        socksPort: Int,
+        socksUser: String,
+        socksPass: String,
+        readyTimeoutMs: Int,
+    ): Long
+
+    fun YpRtcStopRoom(handle: Long)
+    fun YpRtcStopAllRooms()
+    fun YpRtcRoomsRunning(): Int
+    fun YpRtcRoomHealthy(handle: Long): Int
+    fun YpRtcRoomPort(handle: Long): Int
+
     fun YpRtcWaitReady(timeoutMs: Int): Pointer?
     fun YpRtcStop()
     fun YpRtcRunning(): Int
@@ -161,7 +179,13 @@ internal object YpTunCore {
             val tempFile = Files.createTempFile("yptuncore-", "-$fileName")
             tempFile.toFile().deleteOnExit()
             input.use { Files.copy(it, tempFile, StandardCopyOption.REPLACE_EXISTING) }
-            val lib = Native.load(tempFile.toAbsolutePath().toString(), YpTunCoreLib::class.java)
+            // The Go side reads every string as UTF-8; JNA's default is the system ANSI code page, which
+            // turned a Cyrillic user dir (log/cache paths) into '?' → "start logger: open …: cannot find the path".
+            val lib = Native.load(
+                tempFile.toAbsolutePath().toString(),
+                YpTunCoreLib::class.java,
+                mapOf(Library.OPTION_STRING_ENCODING to "UTF-8")
+            )
             startLogPump(lib)
             // NaïveProxy's cronet library is loaded lazily, by name, from PATH — point the core at
             // the directory we unpack the bundled natives into (see DesktopNativeAssets).
@@ -197,7 +221,7 @@ internal object YpTunCore {
     private fun takeString(p: Pointer?): String? {
         if (p == null) return null
         return try {
-            p.getString(0)
+            p.getString(0, "UTF-8")
         } finally {
             lib().YpFree(p)
         }
@@ -219,7 +243,7 @@ internal object YpTunCore {
                 }
                 if (p != null) {
                     val line = try {
-                        p.getString(0)
+                        p.getString(0, "UTF-8")
                     } finally {
                         lib.YpFree(p)
                     }
@@ -383,6 +407,24 @@ internal object YpTunCore {
         "olcRTC start failed"
     )
 
+    /** One multi-room instance on an OS-assigned loopback port; returns its handle, or -1 on failure (see the log). */
+    fun rtcStartRoom(
+        carrier: String,
+        transport: String,
+        roomId: String,
+        clientId: String,
+        keyHex: String,
+        socksUser: String,
+        socksPass: String,
+        readyTimeoutMs: Int,
+    ): Long = lib().YpRtcStartRoom(carrier, transport, roomId, clientId, keyHex, 0, socksUser, socksPass, readyTimeoutMs)
+
+    fun rtcStopRoom(handle: Long) = libOrNull?.YpRtcStopRoom(handle) ?: Unit
+    fun rtcStopAllRooms() = libOrNull?.YpRtcStopAllRooms() ?: Unit
+    fun rtcRoomsRunning(): Int = libOrNull?.YpRtcRoomsRunning() ?: 0
+    fun rtcRoomHealthy(handle: Long): Boolean = libOrNull?.YpRtcRoomHealthy(handle) == 1
+    fun rtcRoomPort(handle: Long): Int = libOrNull?.YpRtcRoomPort(handle) ?: 0
+
     fun rtcWaitReady(timeoutMs: Int) = check(lib().YpRtcWaitReady(timeoutMs), "olcRTC not ready")
     fun rtcStop() = libOrNull?.YpRtcStop() ?: Unit
     fun rtcRunning(): Boolean = libOrNull?.YpRtcRunning() == 1
@@ -406,5 +448,6 @@ internal object YpTunCore {
         runCatching { masterDnsStop() }
         runCatching { awgStop() }
         runCatching { rtcStop() }
+        runCatching { rtcStopAllRooms() }
     }
 }

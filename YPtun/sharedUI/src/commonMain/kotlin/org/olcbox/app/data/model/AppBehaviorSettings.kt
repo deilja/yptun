@@ -57,6 +57,11 @@ data class AppBehaviorSettings(
     val notifPingIntervalMin: Int = 5,
     /** Hidden "Experimental" section unlocked by tapping the connection timer 5×. */
     val experimentalUnlocked: Boolean = false,
+    val legacyUi: Boolean = false,
+    /** Hides the one-tap «Установить на VPS» (SSH) buttons in the server screen. */
+    val hideSshInstall: Boolean = false,
+    /** Hides the «Сессия» button on the home screen. */
+    val hideSessionButton: Boolean = false,
     /**
      * Show the one-tap "Автоустановка на VPS" buttons (WDTT / MasterDNS server deploy over SSH) in the
      * location editor. OFF by default — pushing a binary to a remote server over SSH is an advanced,
@@ -265,6 +270,8 @@ data class AppBehaviorSettings(
      * S1..S4, H1..H4, I1..I5, ...) as fields. Off by default — a wrong value silently breaks the tunnel.
      */
     val allowConfigEditing: Boolean = false,
+    /** Location share link: true = universal yptun:// (whole inbound), false = the engine's own protocol link. */
+    val shareUniversalLink: Boolean = true,
 ) {
     /**
      * A subscription's group key (`name|url`, also its folder member key) changed because its URL did: carry the

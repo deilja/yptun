@@ -39,9 +39,6 @@ import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING
 import org.olcbox.app.vpn.data.KEY_ANDROID_ROUTING_PROFILES
 import org.olcbox.app.vpn.data.KEY_ANDROID_TRAFFIC
 import org.olcbox.app.data.model.LocationConfig
-import org.olcbox.app.data.model.BUILTIN_TELEGRAM_ID
-import org.olcbox.app.data.model.TELEGRAM_RESCUE_PACKAGES
-import org.olcbox.app.data.model.ensureBuiltinTelegramLocation
 import org.olcbox.app.data.datasource.LocationsDataSourceImpl
 import org.olcbox.app.data.datasource.LocationsRepositoryImpl
 import org.olcbox.app.data.identity.PersistentDeviceIdentityProvider
@@ -66,6 +63,7 @@ import org.olcbox.app.vpn.data.KEY_ANDROID_SOCKS_PORT
 import org.olcbox.app.vpn.data.KEY_ANDROID_SOCKS_USERNAME
 import org.olcbox.app.vpn.data.KEY_ANDROID_SOCKS_USERNAME_INITIALIZED
 import org.olcbox.app.vpn.data.vpnPrefDataStore
+import org.olcbox.app.data.importer.TrustTunnelParser
 import org.olcbox.app.vpn.service.OlcboxVpnActions
 import org.olcbox.app.vpn.service.OlcboxVpnState
 import org.olcbox.app.vpn.telegram.TelegramProxyCreds
@@ -137,6 +135,9 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
             "ru" -> AppLanguage.Russian
             "fa" -> AppLanguage.Persian
             "zh" -> AppLanguage.Chinese
+            "sk" -> AppLanguage.Slovak
+            "cs" -> AppLanguage.Czech
+            "be" -> AppLanguage.Belarusian
             else -> AppLanguage.English
         }
 
@@ -180,12 +181,20 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
         }
         refreshInstalledApps()
 
-        // XFi: seed the built-in "Telegram rescue" location (see BuiltinTelegram.kt) so it is
-        // always present in the user's bundle — the home card connects it for a user whose
-        // Telegram is blocked before they have any subscription. Idempotent: a no-op once
-        // present, re-added if the user deleted it, never touches other locations.
+        // XFi: the built-in "Telegram rescue" service location was removed in 3.7.8 — the home
+        // Telegram card now drives the built-in SOCKS5/WARP proxy instead (TelegramProxyService),
+        // so the app no longer ships a hardcoded service endpoint. Delete the copy seeded by
+        // 3.7.0–3.7.7 from the user's bundle so it disappears from their list too.
         scope.launch {
-            runCatching { ensureBuiltinTelegramLocation(locationsRepository) }
+            runCatching {
+                val bundle = locationsRepository.getBundle()
+                if (bundle.locations.any { it.storageId == "builtin_telegram" }) {
+                    locationsRepository.deleteLocation("builtin_telegram")
+                    if (bundle.activeLocationId == "builtin_telegram") {
+                        locationsRepository.setActiveLocationId(null)
+                    }
+                }
+            }
         }
 
         // XFi: the built-in "YouTube direct" test profile was removed in 3.7.6 — delete the
@@ -773,20 +782,7 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
     }
 
     private fun sendStartVpnIntent(activeLocationId: String?) {
-        // Built-in Telegram rescue active: route ONLY the Telegram apps into the tunnel,
-        // whatever the user's global split-tunnel setting says. This is an intent-local
-        // override ONLY — the stored setting (_splitTunnelSettings / DataStore) is not
-        // touched, so the next normal start uses the user's own choice again. The profile's
-        // raw Xray config independently fences traffic to Telegram destinations.
-        val splitTunnel = if (activeLocationId == BUILTIN_TELEGRAM_ID) {
-            AndroidSplitTunnelSettings(
-                mode = AndroidSplitTunnelMode.ProxySelected,
-                proxyPackages = TELEGRAM_RESCUE_PACKAGES.toSet(),
-                bypassPackages = emptySet()
-            )
-        } else {
-            _splitTunnelSettings.value
-        }
+        val splitTunnel = _splitTunnelSettings.value
         val intent = Intent().apply {
             setClassName(context.packageName, OlcboxVpnActions.SERVICE_CLASS_NAME)
             action = OlcboxVpnActions.ACTION_START_VPN
@@ -826,6 +822,8 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
 
     override suspend fun ping(locationConfig: LocationConfig): Long? = pingInternal(locationConfig)
 
+    override suspend fun ping(locationConfig: LocationConfig, isActive: Boolean): Long? = pingInternal(locationConfig, isActive)
+
     override suspend fun checkConnection(locationConfig: LocationConfig): Long? = pingInternal(locationConfig)
 
     override suspend fun pingVerified(locationConfig: LocationConfig): Long? {
@@ -841,22 +839,25 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
      * that does not answer the first time is reported as unreachable right away (re-measuring a dead
      * server would only multiply the timeout).
      */
-    private suspend fun pingInternal(locationConfig: LocationConfig): Long? {
+    private suspend fun pingInternal(locationConfig: LocationConfig, isActive: Boolean = true): Long? {
         var best: Long? = null
         repeat(pingRounds) {
-            val ms = pingOnce(locationConfig)
+            val ms = pingOnce(locationConfig, isActive)
             if (ms == null) return best
             if (best == null || ms < best!!) best = ms
         }
         return best
     }
 
-    private suspend fun pingOnce(locationConfig: LocationConfig): Long? {
+    private suspend fun pingOnce(locationConfig: LocationConfig, isActive: Boolean = true): Long? {
         // User-selected ping method (Settings → «Пинг») overrides the per-engine default probe.
         // TCP/ICMP probe the location's own server; the URL is used ONLY by the proxy GET/HEAD probes.
         val behavior = _appBehavior.value
-        val server = locationConfig.proxy?.server
-        val serverPort = locationConfig.proxy?.serverPort
+        // Trust Tunnel's profile carries a placeholder server/port; the real endpoint lives inside the tt:// blob.
+        val ttEndpoint = locationConfig.proxy?.takeIf { it.type == ProxyProfile.TYPE_TRUSTTUNNEL }
+            ?.let { TrustTunnelParser.endpoints(it.ttConfig).firstOrNull() }
+        val server = ttEndpoint?.first ?: locationConfig.proxy?.server
+        val serverPort = ttEndpoint?.second ?: locationConfig.proxy?.serverPort
         // olcRTC/Stealth (and other provider engines) carry no vless/proxy profile, so the proxy
         // GET/HEAD probe can't build a throwaway outbound for them. When proxy mode is selected (it's
         // now the default) but this location has no proxy, fall through to the engine-default probe
@@ -892,14 +893,17 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
             proxyType == ProxyProfile.TYPE_AMNEZIAWG ->
                 // Connected → measure through the live tunnel; otherwise a standalone WG-handshake
                 // probe gives a real RTT even before connecting (the endpoint may be UDP/blocked).
-                if (OlcboxVpnState.activeSocks != null) tunnelPing()
+                if (isActive && OlcboxVpnState.activeSocks != null) tunnelPing()
                 else awgProbePing(locationConfig.proxy?.awgConfig.orEmpty())
             proxyType == ProxyProfile.TYPE_HYSTERIA2 ->
                 // Hysteria2 is UDP/QUIC-only (TCP to the port usually fails), so before connecting
                 // an ICMP probe to the server host gives the truest path RTT; once up, measure through
                 // the live tunnel.
-                if (OlcboxVpnState.activeSocks != null) tunnelPing()
+                if (isActive && OlcboxVpnState.activeSocks != null) tunnelPing()
                 else icmpPing(locationConfig.proxy?.server.orEmpty())
+            // Trust Tunnel: through the live tunnel when up, else TCP to the endpoint decoded from the tt:// link.
+            proxyType == ProxyProfile.TYPE_TRUSTTUNNEL ->
+                if (isActive && OlcboxVpnState.activeSocks != null) tunnelPing() else tcpPing(server, serverPort)
             // Plain proxies: TCP latency to the (reachable) proxy server.
             locationConfig.engine == EngineType.Standard ->
                 tcpPing(locationConfig.proxy?.server, locationConfig.proxy?.serverPort)
@@ -1100,6 +1104,11 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
                     null
                 }
             }
+            // Trust Tunnel isn't xray-serviceable either — raise a throwaway client (SOCKS-only subprocess) and
+            // fetch through it with xray's SOCKS outbound, so GET/HEAD measure the real tunnel.
+            if (profile.type == ProxyProfile.TYPE_TRUSTTUNNEL) {
+                return@withContext trustTunnelUrlTest(profile, url, method)
+            }
             // Hysteria2 and Naive are native sing-box protocols, not xray-serviceable; the via-proxy
             // URL test isn't available (use Auto/ICMP ping mode instead — Auto's TCP probe still
             // reaches a naive server's HTTPS port).
@@ -1150,6 +1159,53 @@ class AndroidVpnManager(private val context: Context) : VpnManager {
                 null
             }
         }
+
+    private suspend fun trustTunnelUrlTest(profile: ProxyProfile, url: String, method: String): Long? {
+        val port = (20_000..60_000).random()
+        val dirName = "trusttunnel-ping-$port"
+        var process: Process? = null
+        try {
+            process = TrustTunnelCore.start(appContext, dirName, TrustTunnelCore.configToml(profile.ttConfig, port))
+            // Drain the client's output so a full pipe never stalls it.
+            kotlin.concurrent.thread(name = "trusttunnel-ping-log", isDaemon = true) {
+                runCatching { process.inputStream.bufferedReader().forEachLine { } }
+            }
+            val deadline = System.currentTimeMillis() + pingTimeoutMs + 5_000
+            while (System.currentTimeMillis() < deadline && process.isAlive &&
+                runCatching { java.net.Socket().use { it.connect(java.net.InetSocketAddress("127.0.0.1", port), 200) } }.isFailure
+            ) {
+                kotlinx.coroutines.delay(100)
+            }
+            if (!process.isAlive) {
+                OlcboxVpnState.addLog("Proxy $method ping: Trust Tunnel client exited with ${process.exitValue()}")
+                return null
+            }
+            val configJson = org.olcbox.app.vpn.xray.XrayConfig.build(
+                profile = ProxyProfile(
+                    tag = "trusttunnel", type = "socks", server = "127.0.0.1", serverPort = port,
+                ),
+                listenPort = (20_000..60_000).random(),
+                listenHost = "127.0.0.1",
+                logLevel = "none",
+                blockQuic = false,
+            )
+            val ms = runCatching { xraybridge.Xraybridge.measureDelay(configJson, url, method, pingTimeoutMs) }
+                .getOrElse {
+                    OlcboxVpnState.addLog("Proxy $method ping (Trust Tunnel) error: ${it.message}")
+                    -1L
+                }
+            if (ms < 0) OlcboxVpnState.addLog("Proxy $method ping: no response via Trust Tunnel for $url")
+            return if (ms >= 0) ms else null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            OlcboxVpnState.addLog("Proxy $method ping (Trust Tunnel) failed: ${e.message}")
+            return null
+        } finally {
+            TrustTunnelCore.stop(process)
+            runCatching { java.io.File(appContext.filesDir, dirName).deleteRecursively() }
+        }
+    }
 
     override fun subscriptionFetchProxy(): SubscriptionFetchProxy? {
         val currentStatus = status.value
