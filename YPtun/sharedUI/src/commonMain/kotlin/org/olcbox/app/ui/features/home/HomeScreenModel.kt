@@ -212,7 +212,7 @@ class HomeScreenViewModel(
      * Engine auto-fallback for a manual connect: if the first attempt with the location's
      * resolved proxy core ends in [VpnStatus.Error] (or stalls past the attempt budget),
      * retry the SAME location once with the other core (Xray <-> sing-box) by pinning
-     * [org.olcbox.app.data.model.LocationConfig.proxyCore] on the saved location. On success
+     * [org.olcbox.app.data.model.LocationConfig.core] on the saved location. On success
      * the working core stays pinned — the next connects go straight to it; if both cores
      * fail, the original location is restored untouched, so a failed experiment never
      * rewrites the user's settings. A user-initiated stop during either attempt aborts the
@@ -233,7 +233,7 @@ class HomeScreenViewModel(
         if (proxy.type !in CORE_FALLBACK_PROXY_TYPES) return
         // The app-wide global core is not visible at this layer; resolving with the default
         // matches the runtime whenever the location pins a core or the global stays on Auto.
-        val current = location.resolvedProxyCore(proxy)
+        val current = location.resolvedCore()
         val target = if (current == ProxyCore.Xray) ProxyCore.SingBox else ProxyCore.Xray
 
         val first = awaitConnectOutcome()
@@ -253,7 +253,7 @@ class HomeScreenViewModel(
         _state.update { it.copy(isVpnLoading = true, connectError = null) }
         locationsRepository.saveLocation(
             active.storageId,
-            location.copy(proxyCore = target).normalized()
+            location.copy(core = target).normalized()
         )
         loadCurrentConfigNow()
         vpnManager.startVpn()
@@ -1354,13 +1354,14 @@ data class VkTurnLinkPrompt(
 private const val SUBSCRIPTION_AUTO_REFRESH_POLL_MS = 60L * 60L * 1_000L
 
 /** Auto-connect: how many candidates to try before giving up, and the per-attempt connect budget. */
-/** Proxy types both the Xray and the sing-box core can serve — the auto-fallback set. */
+/** Proxy types both the Xray and the sing-box core can serve — the auto-fallback set.
+ * Hysteria2 is excluded on purpose: the Android service pins it to sing-box regardless
+ * of the location's core, so a core swap could not change anything for it. */
 private val CORE_FALLBACK_PROXY_TYPES = setOf(
     ProxyProfile.TYPE_VLESS,
     ProxyProfile.TYPE_VMESS,
     ProxyProfile.TYPE_TROJAN,
     ProxyProfile.TYPE_SHADOWSOCKS,
-    ProxyProfile.TYPE_HYSTERIA2,
 )
 
 private const val AUTO_CONNECT_MAX_ATTEMPTS = 6
