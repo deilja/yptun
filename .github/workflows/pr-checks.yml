@@ -1,0 +1,75 @@
+# PR checks for the XFi fork: unit tests + desktop compile + a debug Android build.
+#
+# Adapted from YPtun/.github/workflows/pr-checks.yml, which GitHub never ran (workflows are
+# only read from the repository root) and which assumed a two-repo layout (olcbox + a sibling
+# olcrtc checkout). This repo is self-contained: the app lives in YPtun/ and olcrtc is in-tree,
+# so a single checkout is enough.
+
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Gradle checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      ANDROID_NDK_VERSION: "28.2.13676358"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cores/go.mod
+          cache: false
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+          sdkmanager "platforms;android-37.0" || sdkmanager "platforms;android-37" || true
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # gomobile at the x/mobile version pinned in cores/go.mod (same as the Android APK build).
+      - name: Install Go mobile tooling
+        run: |
+          cd cores
+          go install golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          export ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}"
+          "$(go env GOPATH)/bin/gomobile" init
+
+      - name: Run checks
+        working-directory: YPtun
+        run: |
+          export OLCRTC_REPO="${{ github.workspace }}/olcrtc"
+          export ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}"
+          export ANDROID_NDK_ROOT="${ANDROID_NDK_HOME}"
+          chmod +x ./gradlew
+          ./gradlew :sharedUI:jvmTest :desktopApp:compileKotlin :androidApp:assembleDebug --stacktrace
