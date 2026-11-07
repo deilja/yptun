@@ -965,6 +965,27 @@ private fun runApp(args: Array<String>) = application {
                     dependencies.telegramProxy.stop()
                 }
             }
+            // XFi Telegram card: the tap flips the same telegramProxyEnabled toggle (see the
+            // OlcboxAppContent call below); once the proxy reports Running we hand its SOCKS
+            // settings to Telegram — tg:// deep link, https fallback, the same handoff as on
+            // Android and in the settings sheet.
+            var pendingTgProxyOpen by remember { mutableStateOf(false) }
+            LaunchedEffect(telegramProxyState, pendingTgProxyOpen) {
+                val running = telegramProxyState as? org.olcbox.app.vpn.telegram.TelegramProxyState.Running
+                if (pendingTgProxyOpen && running != null) {
+                    pendingTgProxyOpen = false
+                    val tgDeep = "tg://socks?server=${running.host}&port=${running.port}" +
+                        "&user=${running.user}&pass=${running.pass}"
+                    val tgLink = "https://t.me/socks?server=${running.host}&port=${running.port}" +
+                        "&user=${running.user}&pass=${running.pass}"
+                    val desktop = runCatching { java.awt.Desktop.getDesktop() }.getOrNull()
+                    val opened = desktop != null &&
+                        runCatching { desktop.browse(java.net.URI(tgDeep)) }.isSuccess
+                    if (!opened && desktop != null) {
+                        runCatching { desktop.browse(java.net.URI(tgLink)) }
+                    }
+                }
+            }
             // Happ-style wide layout: with enough window width the locations move to a left pane.
             val isWideWindow = windowState.size.width >= 700.dp
 
@@ -1026,6 +1047,17 @@ private fun runApp(args: Array<String>) = application {
                     },
                     onToggleClick = {
                         dependencies.homeViewModel.ToggleVpn()
+                    },
+                    onTelegramRescueClick = {
+                        // XFi Telegram card → the built-in SOCKS5/WARP proxy: flip the same
+                        // toggle the settings page uses; the effect above opens Telegram with
+                        // the proxy settings as soon as the proxy is Running.
+                        pendingTgProxyOpen = true
+                        if (!appBehavior.telegramProxyEnabled) {
+                            dependencies.settings.setAppBehavior(
+                                appBehavior.copy(telegramProxyEnabled = true)
+                            )
+                        }
                     },
                     onImportFileRequested = {
                         chooseConfigFile(window)?.let { file ->

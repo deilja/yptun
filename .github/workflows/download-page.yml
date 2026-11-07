@@ -7,7 +7,7 @@ on:
     types: [published, edited, deleted]
   workflow_dispatch:
   push:   # самопроверка при правке этого файла (ручной запуск доступен, только когда файл есть в main)
-    branches: [Beta]
+    branches: [main]
     paths: [.github/workflows/download-page.yml]
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: Beta   # ветка, из которой публикуется GitHub Pages (/docs)
+          ref: main   # ветка, из которой публикуется GitHub Pages (/docs); в форке XFi нет ветки Beta — страница живёт на main
       - name: Refresh docs/latest.json
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,6 +31,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "docs: latest.json -> $(jq -r .tag_name docs/latest.json)"
-          git push origin HEAD:Beta
+          git push origin HEAD:main
           # Пуш от GITHUB_TOKEN сам Pages не пересобирает — просим явно.
           gh api -X POST repos/${{ github.repository }}/pages/builds
