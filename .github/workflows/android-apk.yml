@@ -1,4 +1,4 @@
-# Android APK build (arm64-v8a) for testing a branch on a phone.
+# Android APK builds (arm64-v8a / armeabi-v7a / x86_64 matrix) for testing a branch on a phone.
 #
 # Runs on push to Beta and by hand. The APK is signed with the release keystore when
 # the repo has the secrets ANDROID_RELEASE_KEYSTORE_BASE64 / ANDROID_RELEASE_STORE_PASSWORD /
@@ -21,6 +21,17 @@ permissions:
 
 jobs:
   build:
+    name: Build ${{ matrix.abi }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64-v8a
+            abi_short: arm64
+          - abi: armeabi-v7a
+            abi_short: armv7
+          - abi: x86_64
+            abi_short: x86_64
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     env:
@@ -100,7 +111,7 @@ jobs:
           export ANDROID_NDK_ROOT="${ANDROID_NDK_HOME}"
           export CGO_ENABLED=1
           chmod +x ./gradlew
-          ./gradlew --no-daemon --max-workers=2 -Polcbox.android.abiFilters=arm64-v8a :androidApp:assembleRelease --stacktrace
+          ./gradlew --no-daemon --max-workers=2 -Polcbox.android.abiFilters=${{ matrix.abi }} :androidApp:assembleRelease --stacktrace
 
       - name: Collect APK
         run: |
@@ -110,13 +121,13 @@ jobs:
           mkdir -p dist
           apk=$(find YPtun/androidApp/build/outputs/apk/release -maxdepth 1 -name '*.apk' | sort | head -1)
           [ -n "$apk" ] || { echo "no APK produced"; exit 1; }
-          cp "$apk" "dist/YPtun-${ver}-${code}-arm64-${SIGNING}.apk"
-          "${ANDROID_HOME}"/build-tools/*/apksigner verify --print-certs "dist/YPtun-${ver}-${code}-arm64-${SIGNING}.apk" | head -3
+          cp "$apk" "dist/YPtun-${ver}-${code}-${{ matrix.abi_short }}-${SIGNING}.apk"
+          "${ANDROID_HOME}"/build-tools/*/apksigner verify --print-certs "dist/YPtun-${ver}-${code}-${{ matrix.abi_short }}-${SIGNING}.apk" | head -3
           ls -la dist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: yptun-android-arm64
+          name: yptun-android-${{ matrix.abi_short }}
           path: dist/*.apk
           if-no-files-found: error
           retention-days: 14
