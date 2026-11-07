@@ -33,6 +33,7 @@ import org.olcbox.app.data.model.ProxyProfile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import org.olcbox.app.data.model.LocationEntry
+import org.olcbox.app.data.model.ProxyCore
 import org.olcbox.app.data.model.SubscriptionMetadata
 import org.olcbox.app.data.repository.LocationsRepository
 import org.olcbox.app.data.share.YptunInboundCodec
@@ -199,12 +200,87 @@ class HomeScreenViewModel(
                         return@launch
                     }
                     vpnManager.startVpn()
+                    maybeRetryWithAlternateCore(active)
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(isVpnLoading = false) }
             }
         }
     }
+
+    /**
+     * Engine auto-fallback for a manual connect: if the first attempt with the location's
+     * resolved proxy core ends in [VpnStatus.Error] (or stalls past the attempt budget),
+     * retry the SAME location once with the other core (Xray <-> sing-box) by pinning
+     * [org.olcbox.app.data.model.LocationConfig.proxyCore] on the saved location. On success
+     * the working core stays pinned — the next connects go straight to it; if both cores
+     * fail, the original location is restored untouched, so a failed experiment never
+     * rewrites the user's settings. A user-initiated stop during either attempt aborts the
+     * fallback (it never resurrects a connection the user just killed).
+     *
+     * Deliberately narrow: only the Standard engine (the VK-TURN engines are single-core by
+     * design) and only plain proxy profiles both cores can serve — no verbatim raw Xray
+     * configs, no Xray-only transports (see [org.olcbox.app.data.model.ProxyProfile.requiresXray]),
+     * no special transports (AmneziaWG / TrustTunnel / Naive run their own stacks). Pure
+     * orchestration over the public [VpnManager] API, mirroring [autoConnectInOrder]'s
+     * attempt handling.
+     */
+    private suspend fun maybeRetryWithAlternateCore(active: LocationEntry) {
+        val location = active.location
+        val proxy = location.proxy ?: return
+        if (location.engine != EngineType.Standard) return
+        if (!proxy.rawXrayConfig.isNullOrBlank() || proxy.requiresXray()) return
+        if (proxy.type !in CORE_FALLBACK_PROXY_TYPES) return
+        // The app-wide global core is not visible at this layer; resolving with the default
+        // matches the runtime whenever the location pins a core or the global stays on Auto.
+        val current = location.resolvedProxyCore(proxy)
+        val target = if (current == ProxyCore.Xray) ProxyCore.SingBox else ProxyCore.Xray
+
+        val first = awaitConnectOutcome()
+        if (first is VpnStatus.Connected) return
+        // Timed out while still Connecting: the attempt may still land — leave it alone.
+        // Disconnected here means the user stopped the attempt: never resurrect it.
+        if (first == null && vpnManager.status.value !is VpnStatus.Error &&
+            vpnManager.status.value !is VpnStatus.Disconnected
+        ) return
+        if (vpnManager.status.value is VpnStatus.Disconnected && first == null) return
+
+        // First attempt failed — tear it down before the retry, like Auto does.
+        vpnManager.stopVpn()
+        withTimeoutOrNull(STOP_SETTLE_TIMEOUT_MS) {
+            vpnManager.status.first { it is VpnStatus.Disconnected || it is VpnStatus.Error }
+        }
+        _state.update { it.copy(isVpnLoading = true, connectError = null) }
+        locationsRepository.saveLocation(
+            active.storageId,
+            location.copy(proxyCore = target).normalized()
+        )
+        loadCurrentConfigNow()
+        vpnManager.startVpn()
+        val second = awaitConnectOutcome()
+        if (second is VpnStatus.Connected) return
+        // Retry still in flight past the budget: it runs with the target core pinned, which
+        // is consistent — leave it to land or fail on its own.
+        if (second == null && vpnManager.status.value is VpnStatus.Connecting) return
+
+        // Both cores failed: put the user's original location back exactly as it was.
+        vpnManager.stopVpn()
+        withTimeoutOrNull(STOP_SETTLE_TIMEOUT_MS) {
+            vpnManager.status.first { it is VpnStatus.Disconnected || it is VpnStatus.Error }
+        }
+        locationsRepository.saveLocation(active.storageId, location)
+        loadCurrentConfigNow()
+    }
+
+    /** Waits for the in-flight start attempt's verdict, mirroring [autoConnectInOrder]. */
+    private suspend fun awaitConnectOutcome(): VpnStatus? =
+        withTimeoutOrNull(AUTO_CONNECT_ATTEMPT_TIMEOUT_MS) {
+            vpnManager.status
+                .dropWhile {
+                    it is VpnStatus.Disconnected || it is VpnStatus.Error || it is VpnStatus.Stopping
+                }
+                .first { it is VpnStatus.Connected || it is VpnStatus.Error }
+        }
 
     /**
      * "Auto = fastest": connects to the first location in [orderedStorageIds] (already sorted
@@ -1278,6 +1354,15 @@ data class VkTurnLinkPrompt(
 private const val SUBSCRIPTION_AUTO_REFRESH_POLL_MS = 60L * 60L * 1_000L
 
 /** Auto-connect: how many candidates to try before giving up, and the per-attempt connect budget. */
+/** Proxy types both the Xray and the sing-box core can serve — the auto-fallback set. */
+private val CORE_FALLBACK_PROXY_TYPES = setOf(
+    ProxyProfile.TYPE_VLESS,
+    ProxyProfile.TYPE_VMESS,
+    ProxyProfile.TYPE_TROJAN,
+    ProxyProfile.TYPE_SHADOWSOCKS,
+    ProxyProfile.TYPE_HYSTERIA2,
+)
+
 private const val AUTO_CONNECT_MAX_ATTEMPTS = 6
 private const val AUTO_CONNECT_ATTEMPT_TIMEOUT_MS = 15_000L
 private const val STOP_SETTLE_TIMEOUT_MS = 6_000L
